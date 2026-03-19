@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ScanCheckSakura</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ScanCheckSakura.styles.css" asp-append-version="true" />
+
+    <!-- Thêm style override cho dark mode toàn cục (nếu cần) -->
+    <style>
+        :root[data-bs-theme="dark"] {
+            --bs-body-bg: #0f1217;
+            --bs-body-color: #e2e8f0;
+            --bs-link-color: #60a5fa;
+            --bs-link-hover-color: #93c5fd;
+        }
+
+        body {
+            background-color: #0f1217;
+            color: #e2e8f0;
+        }
+
+        /* Dark Navbar Overrides */
+        .navbar {
+            background-color: #0f1217 !important;
+            border-bottom: 1px solid #334155 !important;
+        }
+
+        .navbar-brand,
+        .nav-link {
+            color: #e2e8f0 !important;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link:focus {
+            color: #60a5fa !important;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(226, 232, 240, 0.95)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+
+        .box-shadow {
+            box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .4) !important;
+        }
+
+        main {
+            min-height: calc(100vh - 140px); /* đảm bảo footer không bị dính lên */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" 
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">FG Check</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Back Panel Check</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Middel Panel Check</a>
+                        </li>
+                         <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Top Panel Check</a>
+                        </li>
+                        <!-- Bạn có thể thêm menu khác ở đây nếu cần -->
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-4">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Footer (tùy chọn - bạn có thể thêm nếu muốn) -->
+    <!--
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - SVN IT
+        </div>
+    </footer>
+    -->
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

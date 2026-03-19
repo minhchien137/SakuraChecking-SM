@@ -1,0 +1,473 @@
+@model ScanCheckSakura.Models.CBCPViewModel
+@{
+    ViewData["Title"] = "色盒与产品盒检查 Color & Product Box Check";
+}
+
+<style>
+    :root {
+        --bg-primary:    #0f1217;
+        --bg-secondary:  #1a1f27;
+        --bg-tertiary:   #242a35;
+        --text-primary:  #e2e8f0;
+        --text-secondary:#94a3b8;
+        --text-tertiary: #64748b;
+        --border:        #2d3748;
+        --accent:        #3b82f6;
+        --pass-color:    #22c55e;
+        --pass-bg:       rgba(34,197,94,0.12);
+        --fail-color:    #ef4444;
+        --fail-bg:       rgba(239,68,68,0.12);
+        --radius:        10px;
+    }
+
+    body { background: var(--bg-primary); color: var(--text-primary); }
+
+    .qc-wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2.5rem 2rem 4rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .qc-header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 1.75rem; border-bottom: 1px solid var(--border); }
+    .qc-header h1 { font-size: 2rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .qc-header p  { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+
+    .qc-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0 3rem; align-items: start; }
+
+    @@media (max-width: 768px) {
+        .qc-body { grid-template-columns: 1fr; gap: 2.5rem 0; }
+        .qc-divider { display: none; }
+    }
+
+    .qc-divider { width: 1px; align-self: stretch; background: var(--border); }
+
+    .fields-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .field-group { display: flex; flex-direction: column; gap: 0.45rem; }
+
+    .field-group label {
+        font-size: 0.82rem; font-weight: 600;
+        letter-spacing: 0.07em; text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+
+    .field-group input {
+        padding: 13px 15px; font-size: 1.2rem;
+        font-family: 'Courier New', monospace;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-primary);
+        outline: none; width: 100%;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field-group input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.18);
+        background: var(--bg-secondary);
+    }
+
+    .btn-check {
+        margin-top: 0.75rem; padding: 13px;
+        font-size: 1.05rem; font-weight: 600;
+        background: var(--accent); color: #fff;
+        border: none; border-radius: var(--radius);
+        cursor: pointer; width: 100%;
+        transition: background 0.2s, transform 0.1s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .btn-check:hover   { background: #2563eb; transform: translateY(-1px); }
+    .btn-check:active  { transform: translateY(0); }
+    .btn-check:disabled{ opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .spinner {
+        display: none; width: 16px; height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: #fff; border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Circle */
+    .result-panel { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+    .circle-wrap  { position: relative; width: 210px; height: 210px; }
+    .circle-bg    { fill: none; stroke: var(--border); stroke-width: 8; }
+
+    .circle-ring {
+        fill: none; stroke-width: 8; stroke-linecap: round;
+        transform-origin: 50% 50%; transform: rotate(-90deg);
+        stroke-dasharray: 585; stroke-dashoffset: 585;
+        stroke: var(--border);
+        transition: stroke-dashoffset 0.7s ease, stroke 0.4s ease;
+    }
+
+    .circle-ring.pass { stroke: var(--pass-color); stroke-dashoffset: 0; }
+    .circle-ring.fail { stroke: var(--fail-color); stroke-dashoffset: 0; }
+
+    .circle-inner {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 6px;
+    }
+
+    .circle-verdict { font-size: 3.2rem; font-weight: 700; line-height: 1; color: var(--text-tertiary); transition: color 0.3s; }
+    .circle-verdict.pass { color: var(--pass-color); }
+    .circle-verdict.fail { color: var(--fail-color); }
+
+    .circle-sub { font-size: 1rem; color: var(--text-secondary); text-align: center; transition: color 0.3s; }
+    .circle-sub.pass { color: var(--pass-color); }
+    .circle-sub.fail { color: var(--fail-color); }
+
+    .color-info { display: flex; align-items: center; gap: 10px; font-size: 1rem; font-weight: 500; min-height: 24px; }
+
+    .color-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; }
+    .color-sep { color: var(--text-tertiary); }
+
+    .server-msg {
+        font-size: 0.95rem; padding: 12px 18px;
+        border-radius: var(--radius); text-align: center;
+        max-width: 300px; line-height: 1.5;
+    }
+
+    .server-msg.pass   { background: var(--pass-bg); color: var(--pass-color); }
+    .server-msg.fail   { background: var(--fail-bg);  color: var(--fail-color); }
+    .server-msg.hidden { display: none; }
+
+    /* History */
+    .history-section { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .history-header  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+
+    .history-title {
+        font-size: 0.8rem; font-weight: 600;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-secondary); text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .history-title:hover { color: var(--text-primary); }
+    .history-count { font-size: 0.78rem; color: var(--text-tertiary); }
+
+    .history-scroll {
+        max-height: 232px; overflow-y: auto;
+        border: 1px solid var(--border); border-radius: var(--radius);
+        scrollbar-width: thin; scrollbar-color: var(--bg-tertiary) transparent;
+    }
+
+    .history-scroll::-webkit-scrollbar       { width: 5px; }
+    .history-scroll::-webkit-scrollbar-track { background: transparent; }
+    .history-scroll::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+
+    .history-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+
+    .history-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: var(--bg-secondary);
+        padding: 10px 14px; font-size: 0.72rem; font-weight: 600;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        color: var(--text-tertiary); border-bottom: 1px solid var(--border);
+        white-space: nowrap; text-align: left;
+    }
+
+    .history-table tbody tr { border-bottom: 1px solid rgba(45,55,72,0.6); transition: background 0.1s; }
+    .history-table tbody tr:last-child { border-bottom: none; }
+    .history-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+    .history-table td {
+        padding: 9px 14px; color: var(--text-primary);
+        font-family: 'Courier New', monospace; font-size: 0.82rem;
+        white-space: nowrap; vertical-align: middle;
+    }
+
+    .td-time { font-family: system-ui, sans-serif; font-size: 0.78rem; color: var(--text-tertiary); }
+    .dot-sm  { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+    .pill { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; padding: 2px 10px; border-radius: 20px; font-family: system-ui, sans-serif; }
+    .pill-pass { background: var(--pass-bg); color: var(--pass-color); }
+    .pill-fail { background: var(--fail-bg); color: var(--fail-color); }
+    .history-empty { padding: 2.5rem; text-align: center; color: var(--text-tertiary); font-size: 0.9rem; }
+</style>
+
+<div class="qc-wrap">
+
+    <div class="qc-header">
+        <h1>色盒与产品盒检查 Color Box &amp; Product Check</h1>
+        <p>比较色盒颜色与产品颜色 Compare the color of the color box with the color of the product</p>
+    </div>
+
+    <div class="qc-body">
+
+        <!-- Left: inputs -->
+        <div class="fields-panel">
+            @Html.AntiForgeryToken()
+
+            <div class="field-group">
+                <label for="BoxSN">色盒序列号 Color Box SN</label>
+                <input type="text" id="BoxSN"
+                       placeholder="输入色盒序列号 Enter Color Box SN..."
+                       maxlength="13" inputmode="numeric" autofocus />
+            </div>
+
+            <div class="field-group">
+                <label for="ProductSN">产品序列号 Product SN</label>
+                <input type="text" id="ProductSN"
+                       placeholder="输入产品序列号 Enter Product SN..."
+                       maxlength="15" />
+            </div>
+
+            <button type="button" class="btn-check" id="btnCheck">
+                <span id="btnText">检查 CHECK</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+        </div>
+
+        <div class="qc-divider"></div>
+
+        <!-- Right: result -->
+        <div class="result-panel">
+            <div class="circle-wrap">
+                <svg width="210" height="210" viewBox="0 0 210 210">
+                    <circle class="circle-bg" cx="105" cy="105" r="93" />
+                    <circle class="circle-ring" id="circleRing" cx="105" cy="105" r="93" />
+                </svg>
+                <div class="circle-inner">
+                    <span class="circle-verdict" id="circleVerdict">—</span>
+                    <span class="circle-sub"     id="circleSub">未检查</span>
+                </div>
+            </div>
+
+            <div class="color-info"  id="colorInfo"></div>
+            <div class="server-msg hidden" id="serverMsg"></div>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section">
+        <div class="history-header">
+            <a asp-action="CBCPLog" asp-controller="FGCheck" class="history-title">
+                检查历史 Inspection History ↗
+            </a>
+            <span class="history-count" id="historyCount">
+                @(Model?.RecentLogs?.Count > 0
+                    ? $"{Model.RecentLogs.Count} 条最近记录 recent records"
+                    : "暂无数据 No data")
+            </span>
+        </div>
+
+        <div class="history-scroll">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>色盒序列号</th>
+                        <th>产品序列号</th>
+                        <th>色盒颜色</th>
+                        <th>产品颜色</th>
+                        <th>结果</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    @if (Model?.RecentLogs == null || !Model.RecentLogs.Any())
+                    {
+                        <tr><td colspan="7" class="history-empty">暂无检查历史 No inspection history</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var log in Model.RecentLogs)
+                        {
+                            string db = log.BoxColor  switch { "Pink" => "#ec4899", "Blue" => "#3b82f6", "Green" => "#22c55e", _ => "#64748b" };
+                            string dp = log.ProductColor switch { "Pink" => "#ec4899", "Blue" => "#3b82f6", "Green" => "#22c55e", _ => "#64748b" };
+                            <tr>
+                                <td class="td-time">@log.CheckedAt.ToLocalTime().ToString("dd/MM HH:mm:ss")</td>
+                                <td>@log.BoxSN</td>
+                                <td>@log.ProductSN</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(log.BoxColor))
+                                    { <span class="dot-sm" style="background:@db"></span>@log.BoxColor }
+                                    else { <span style="color:var(--text-tertiary)">—</span> }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(log.ProductColor))
+                                    { <span class="dot-sm" style="background:@dp"></span>@log.ProductColor }
+                                    else { <span style="color:var(--text-tertiary)">—</span> }
+                                </td>
+                                <td><span class="pill @(log.Result == "PASS" ? "pill-pass" : "pill-fail")">@log.Result</span></td>
+                                <td style="color:var(--text-tertiary);font-family:system-ui;font-size:0.78rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;">
+                                    @(string.IsNullOrEmpty(log.ErrorMessage) ? "—" : log.ErrorMessage)
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    'use strict';
+
+    const boxEl        = document.getElementById('BoxSN');
+    const prodEl       = document.getElementById('ProductSN');
+    const btnCheck     = document.getElementById('btnCheck');
+    const btnText      = document.getElementById('btnText');
+    const spinner      = document.getElementById('spinner');
+    const ring         = document.getElementById('circleRing');
+    const verdict      = document.getElementById('circleVerdict');
+    const sub          = document.getElementById('circleSub');
+    const colorInfo    = document.getElementById('colorInfo');
+    const serverMsg    = document.getElementById('serverMsg');
+    const historyBody  = document.getElementById('historyBody');
+    const historyCount = document.getElementById('historyCount');
+    const token        = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    const DOT = { Pink: '#ec4899', Blue: '#3b82f6', Green: '#22c55e' };
+
+    if (boxEl) boxEl.focus();
+
+    // Auto-focus: BoxSN đủ 13 → focus ProductSN
+    boxEl?.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').substring(0, 13);
+        if (this.value.length === 13) setTimeout(() => prodEl?.focus(), 80);
+    });
+
+    // Auto-submit: ProductSN đủ 15 → check
+    prodEl?.addEventListener('input', function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 15);
+        if (this.value.length === 15 && (boxEl?.value.length ?? 0) === 13) {
+            setTimeout(runCheck, 120);
+        }
+    });
+
+    prodEl?.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); runCheck(); } });
+    btnCheck?.addEventListener('click', runCheck);
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            boxEl.value = ''; prodEl.value = '';
+            boxEl?.focus(); resetCircle();
+        }
+    });
+
+    // ── AJAX call ────────────────────────────────────────
+    async function runCheck() {
+        const box  = (boxEl?.value  ?? '').trim();
+        const prod = (prodEl?.value ?? '').trim().toUpperCase();
+        if (!box || !prod) return;
+
+        setLoading(true);
+
+        try {
+            const fd = new FormData();
+            fd.append('boxSN',     box);
+            fd.append('productSN', prod);
+            fd.append('__RequestVerificationToken', token);
+
+            const resp = await fetch('/FGCheck/CBCPCheck', { method: 'POST', body: fd });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+            const data = await resp.json();
+
+            renderResult(data);
+            renderHistory(data.recentLogs);
+
+            // Xóa input, focus lại BoxSN
+            boxEl.value = ''; prodEl.value = '';
+            boxEl.focus();
+
+            // Tự reset circle về xám sau 2 giây
+            setTimeout(resetCircle, 2000);
+
+        } catch (err) {
+            showMsg('连接错误 Connection error: ' + err.message, false);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // ── Cập nhật circle ───────────────────────────────────
+    function renderResult(data) {
+        const pass = data.isPass;
+
+        ring.setAttribute('class', 'circle-ring ' + (pass ? 'pass' : 'fail'));
+        verdict.textContent = pass ? 'PASS' : 'FAIL';
+        verdict.className   = 'circle-verdict ' + (pass ? 'pass' : 'fail');
+        sub.textContent     = pass ? '颜色匹配' : '颜色不匹配';
+        sub.className       = 'circle-sub ' + (pass ? 'pass' : 'fail');
+
+        if (data.boxColor && data.productColor) {
+            colorInfo.innerHTML =
+                `<span class="color-dot" style="background:${DOT[data.boxColor] || '#64748b'}"></span>
+                 <span>${data.boxColor}</span>
+                 <span class="color-sep">→</span>
+                 <span class="color-dot" style="background:${DOT[data.productColor] || '#64748b'}"></span>
+                 <span>${data.productColor}</span>`;
+        } else {
+            colorInfo.innerHTML = '';
+        }
+
+        const msg = pass
+            ? (data.workOrderInfo || '产品已记录 Product recorded')
+            : (data.errorMessage  || '检查失败 Check failed');
+        showMsg(msg, pass);
+    }
+
+    // ── Cập nhật bảng lịch sử ────────────────────────────
+    function renderHistory(logs) {
+        if (!logs || logs.length === 0) {
+            historyBody.innerHTML = '<tr><td colspan="7" class="history-empty">暂无历史 No history</td></tr>';
+            historyCount.textContent = '暂无数据 No data';
+            return;
+        }
+
+        historyCount.textContent = logs.length + ' 条最近记录 recent records';
+
+        historyBody.innerHTML = logs.map(l => {
+            const pass    = l.result === 'PASS';
+            const bDot    = DOT[l.boxColor]  || '#64748b';
+            const pDot    = DOT[l.productColor] || '#64748b';
+            const bHtml   = l.boxColor     ? `<span class="dot-sm" style="background:${bDot}"></span>${l.boxColor}`     : `<span style="color:var(--text-tertiary)">—</span>`;
+            const pHtml   = l.productColor ? `<span class="dot-sm" style="background:${pDot}"></span>${l.productColor}` : `<span style="color:var(--text-tertiary)">—</span>`;
+            const note    = l.errorMessage || '—';
+
+            return `<tr>
+                <td class="td-time">${l.checkedAt}</td>
+                <td>${l.boxSN}</td>
+                <td>${l.productSN}</td>
+                <td>${bHtml}</td>
+                <td>${pHtml}</td>
+                <td><span class="pill ${pass ? 'pill-pass' : 'pill-fail'}">${l.result}</span></td>
+                <td style="color:var(--text-tertiary);font-family:system-ui;font-size:0.78rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${note}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function showMsg(text, pass) {
+        serverMsg.textContent = text;
+        serverMsg.className   = 'server-msg ' + (pass ? 'pass' : 'fail');
+    }
+
+    function resetCircle() {
+        ring.setAttribute('class', 'circle-ring');
+        verdict.textContent = '—'; verdict.className = 'circle-verdict';
+        sub.textContent     = '未检查'; sub.className = 'circle-sub';
+        colorInfo.innerHTML = '';
+        serverMsg.className = 'server-msg hidden';
+    }
+
+    function setLoading(on) {
+        btnCheck.disabled     = on;
+        btnText.style.display = on ? 'none'  : 'inline';
+        spinner.style.display = on ? 'block' : 'none';
+    }
+
+}());
+</script>
+}
