@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ScanCheckSakura.Data;
+using ScanCheckSakura.Services;
 using ScanCheckSakura.Services.FGServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ICBCPService, CBCPService>();
 builder.Services.AddScoped<ICBCPLogService, CBCPLogService>();
+builder.Services.AddScoped<IFqcbpService, FqcbpService>();
+builder.Services.AddScoped<IFqcOdooService, FqcOdooService>();
+builder.Services.AddHttpClient<OdooController>();
+
 
 var app = builder.Build();
 

@@ -222,11 +222,37 @@
     }
     .wo-display__value.empty { color: var(--text-tertiary); font-size: 1rem; font-weight: 400; }
 
+    /* Color loading spinner */
+    .color-loading {
+        display: none;
+        width: 14px; height: 14px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin: 0 auto;
+    }
+    .color-loading.visible { display: inline-block; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
     .qty-card {
         background: var(--bg-secondary);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        padding: 1rem 2rem; text-align: center; width: 100%;
+        padding: 1rem 1.5rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Qty bên trái */
+    .qty-main {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        flex: 1;
+        border-right: 1px solid var(--border);
+        padding-right: 1rem;
     }
 
     .qty-card__label {
@@ -241,6 +267,33 @@
         transition: transform 0.2s;
     }
     .qty-card__value.bump { transform: scale(1.2); }
+
+    /* Detail bên phải */
+    .qty-detail {
+        display: flex; flex-direction: column;
+        gap: 0.5rem; flex: 1;
+        padding-left: 0.5rem;
+    }
+
+    .qty-detail__row {
+        display: flex; align-items: center;
+        justify-content: space-between; gap: 0.5rem;
+    }
+
+    .qty-detail__label {
+        font-size: 0.75rem; font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+    .qty-detail__label.pass { color: var(--pass-color); }
+    .qty-detail__label.ng   { color: var(--ng-color); }
+
+    .qty-detail__val {
+        font-size: 1.2rem; font-weight: 700;
+        font-family: 'Courier New', monospace;
+        min-width: 2rem; text-align: right;
+    }
+    .qty-detail__val.pass { color: var(--pass-color); }
+    .qty-detail__val.ng   { color: var(--ng-color); }
 
     /* Circle */
     .circle-wrap  { position: relative; width: 180px; height: 180px; }
@@ -361,10 +414,31 @@
                 <div class="wo-display__value empty" id="woDisplayValue">未输入/Not Entered</div>
             </div>
 
+            <!-- Color display -->
+            <div class="wo-display">
+                <div class="wo-display__label">Color</div>
+                <div class="wo-display__value empty" id="colorDisplayValue">—</div>
+                <span class="color-loading" id="colorLoading"></span>
+            </div>
+
             <!-- QTY -->
             <div class="qty-card">
-                <div class="qty-card__label">数量 / Quantity</div>
-                <div class="qty-card__value" id="qtyValue">0</div>
+                <!-- Trái: tổng -->
+                <div class="qty-main">
+                    <div class="qty-card__label">Qty Scanned</div>
+                    <div class="qty-card__value" id="qtyValue">0</div>
+                </div>
+                <!-- Phải: detail -->
+                <div class="qty-detail">
+                    <div class="qty-detail__row">
+                        <span class="qty-detail__label pass">✓ PASS</span>
+                        <span class="qty-detail__val pass" id="passQtyValue">0</span>
+                    </div>
+                    <div class="qty-detail__row">
+                        <span class="qty-detail__label ng">✕ NG</span>
+                        <span class="qty-detail__val ng" id="ngQtyValue">0</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Circle -->
@@ -389,25 +463,31 @@
     'use strict';
 
     // ── Elements ──────────────────────────────────────────
-    const woInput      = document.getElementById('WorkOrder');
-    const snInput      = document.getElementById('SerialNumber');
-    const btnSaveWO    = document.getElementById('btnSaveWO');
-    const btnRemoveWO  = document.getElementById('btnRemoveWO');
-    const savedWOChip  = document.getElementById('savedWOChip');
-    const savedWOText  = document.getElementById('savedWOText');
-    const btnPass      = document.getElementById('btnPass');
-    const btnNG        = document.getElementById('btnNG');
-    const woDisplay    = document.getElementById('woDisplayValue');
-    const qtyValue     = document.getElementById('qtyValue');
-    const ring         = document.getElementById('circleRing');
-    const verdict      = document.getElementById('circleVerdict');
-    const sub          = document.getElementById('circleSub');
-    const snErrorMsg   = document.getElementById('snErrorMsg');
+    const woInput        = document.getElementById('WorkOrder');
+    const snInput        = document.getElementById('SerialNumber');
+    const btnSaveWO      = document.getElementById('btnSaveWO');
+    const btnRemoveWO    = document.getElementById('btnRemoveWO');
+    const savedWOChip    = document.getElementById('savedWOChip');
+    const savedWOText    = document.getElementById('savedWOText');
+    const btnPass        = document.getElementById('btnPass');
+    const btnNG          = document.getElementById('btnNG');
+    const woDisplay      = document.getElementById('woDisplayValue');
+    const colorDisplay   = document.getElementById('colorDisplayValue');
+    const colorLoading   = document.getElementById('colorLoading');
+    const qtyValue       = document.getElementById('qtyValue');
+    const passQtyValue   = document.getElementById('passQtyValue');
+    const ngQtyValue     = document.getElementById('ngQtyValue');
+    const ring           = document.getElementById('circleRing');
+    const verdict        = document.getElementById('circleVerdict');
+    const sub            = document.getElementById('circleSub');
+    const snErrorMsg     = document.getElementById('snErrorMsg');
 
     // ── State ─────────────────────────────────────────────
     const STORAGE_KEY  = 'fqcbp_saved_wo';
     let qty            = 0;
-    let currentVerdict = null; // 'pass' | 'ng' | null
+    let passQty        = 0;
+    let ngQty          = 0;
+    let currentVerdict = null;
 
     // ── Khởi động: load WO đã lưu ────────────────────────
     const savedWO = localStorage.getItem(STORAGE_KEY);
@@ -415,6 +495,8 @@
         woInput.value = savedWO;
         updateWODisplay(savedWO);
         showSavedChip(savedWO);
+        fetchColor(savedWO);
+        fetchQty(savedWO);   // ← load Qty từ DB
         snInput.focus();
     } else {
         woInput.focus();
@@ -423,13 +505,18 @@
     // ── Sync WO display khi gõ ────────────────────────────
     woInput.addEventListener('input', function () {
         updateWODisplay(this.value.trim() || null);
+        // Reset color khi WO thay đổi
+        updateColorDisplay(null);
     });
 
-    // Scanner quét WO → Enter → chuyển sang SN
+    // Scanner quét WO → Enter → fetch color + qty + chuyển sang SN
     woInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (!this.value.trim()) { flashInput(woInput); return; }
+            const wo = this.value.trim();
+            if (!wo) { flashInput(woInput); return; }
+            fetchColor(wo);
+            fetchQty(wo);    // ← load Qty từ DB
             snInput.focus();
         }
     });
@@ -440,6 +527,8 @@
         if (!wo) { flashInput(woInput); return; }
         localStorage.setItem(STORAGE_KEY, wo);
         showSavedChip(wo);
+        fetchColor(wo);
+        fetchQty(wo);        // ← load Qty từ DB
         snInput.focus();
     });
 
@@ -448,7 +537,9 @@
         localStorage.removeItem(STORAGE_KEY);
         woInput.value = '';
         updateWODisplay(null);
+        updateColorDisplay(null);
         hideSavedChip();
+        qty = 0;
         resetAll();
         woInput.focus();
     });
@@ -469,12 +560,11 @@
         clearSNError();
     });
 
- 
     snInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             if (!validateSN()) return;
-            this.blur(); 
+            this.blur();
         }
         if (e.key === 'Escape') {
             e.preventDefault();
@@ -485,36 +575,25 @@
         }
     });
 
-    // ── Global keyboard shortcuts ───
+    // ── Global keyboard shortcuts ─────────────────────────
     document.addEventListener('keydown', function (e) {
         const tag = e.target.tagName;
-
-  
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-        // Phím 1 → PASS
         if (e.key === '1') {
             e.preventDefault();
             flashBtn(btnPass);
-            if (snInput.value.trim()) {
-                submitScan('PASS');
-            } else {
-                snInput.focus();
-            }
+            if (snInput.value.trim()) submitScan('PASS');
+            else snInput.focus();
         }
 
-        // Phím 2 → NG
         if (e.key === '2') {
             e.preventDefault();
             flashBtn(btnNG);
-            if (snInput.value.trim()) {
-                submitScan('NG');
-            } else {
-                snInput.focus();
-            }
+            if (snInput.value.trim()) submitScan('NG');
+            else snInput.focus();
         }
 
-        // Esc → xóa SN
         if (e.key === 'Escape') {
             e.preventDefault();
             snInput.value = '';
@@ -524,9 +603,48 @@
     });
 
     // ══════════════════════════════════════════════════════
-    // Scan logic (UI only — sẽ kết nối API sau)
+    // Odoo API — fetch Color từ Work Order
     // ══════════════════════════════════════════════════════
-    function submitScan(verdictStr) {
+    async function fetchColor(wo) {
+        colorDisplay.classList.add('empty');
+        colorDisplay.innerHTML = '';
+        colorLoading.classList.add('visible');
+
+        try {
+            const res = await fetch(`/api/Odoo/search?productionCode=${encodeURIComponent(wo)}`);
+            if (res.ok) {
+                const data = await res.json();
+                updateColorDisplay(data.productColor || null);
+            } else {
+                updateColorDisplay(null);
+            }
+        } catch {
+            updateColorDisplay(null);
+        } finally {
+            colorLoading.classList.remove('visible');
+        }
+    }
+
+    // ── Fetch Qty từ DB khi load WO ───────────────────────
+    async function fetchQty(wo) {
+        try {
+            const res = await fetch(`/FQC/qty?workOrder=${encodeURIComponent(wo)}`);
+            if (res.ok) {
+                const data = await res.json();
+                qty     = data.qty     ?? 0;
+                passQty = data.passQty ?? 0;
+                ngQty   = data.ngQty   ?? 0;
+                updateQtyDisplay();
+            }
+        } catch {
+            // giữ nguyên nếu lỗi
+        }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Scan logic — gọi API lưu DB
+    // ══════════════════════════════════════════════════════
+    async function submitScan(verdictStr) {
         const wo = woInput.value.trim();
         const sn = snInput.value.trim();
 
@@ -536,19 +654,44 @@
 
         const isPass = verdictStr === 'PASS';
 
-        // Tăng QTY
-        qty++;
-        animateQty();
-
-        // Hiện circle
+        // Hiện circle ngay lập tức (UX nhanh)
         showCircle(isPass ? 'pass' : 'ng');
-
-        // Xóa SN, tắt active nút PASS/NG, focus lại ô SN để quét tiếp
         snInput.value = '';
         setVerdict(null);
         snInput.focus();
 
-        // Reset circle sau 2 giây
+        try {
+            const res = await fetch('/FQC/scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    workOrder:    wo,
+                    serialNumber: sn,
+                    status:       verdictStr
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                qty     = data.qty     ?? qty;
+                passQty = data.passQty ?? passQty;
+                ngQty   = data.ngQty   ?? ngQty;
+                animateQty();
+            } else {
+                // Fallback local
+                qty++; isPass ? passQty++ : ngQty++;
+                animateQty();
+                console.error('Scan API error:', res.status);
+            }
+        } catch {
+            qty++; isPass ? passQty++ : ngQty++;
+            animateQty();
+            console.error('Scan API unreachable');
+        }
+
         setTimeout(resetCircle, 2000);
     }
 
@@ -559,8 +702,42 @@
             woDisplay.textContent = value;
             woDisplay.classList.remove('empty');
         } else {
-            woDisplay.textContent = 'Chưa nhập';
+            woDisplay.textContent = '未输入/Not Entered';
             woDisplay.classList.add('empty');
+        }
+    }
+
+    function updateColorDisplay(value) {
+        if (value) {
+            // Map tên màu → mã hex
+            const colorMap = {
+                'Blue':  '#3b82f6',
+                'Green': '#22c55e',
+                'Pink':  '#ec4899',
+                'Red':   '#ef4444',
+                'Black': '#64748b',
+                'White': '#e2e8f0',
+            };
+            const hex = colorMap[value] || '#94a3b8';
+            colorDisplay.innerHTML = `
+                <span style="
+                    display:inline-block;
+                    width:12px; height:12px;
+                    border-radius:50%;
+                    background:${hex};
+                    box-shadow:0 0 0 2px rgba(255,255,255,0.15);
+                    vertical-align:middle;
+                    margin-right:8px;
+                    flex-shrink:0;
+                "></span>${value}`;
+            colorDisplay.style.display = 'flex';
+            colorDisplay.style.alignItems = 'center';
+            colorDisplay.style.justifyContent = 'center';
+            colorDisplay.classList.remove('empty');
+        } else {
+            colorDisplay.innerHTML = '—';
+            colorDisplay.style.display = '';
+            colorDisplay.classList.add('empty');
         }
     }
 
@@ -589,26 +766,30 @@
     }
 
     function resetCircle() {
-        // Tắt transition để reset tức thì, không animate ngược lại
         ring.style.transition = 'none';
         ring.setAttribute('class', 'circle-ring');
-        // Bật lại transition sau 1 frame để lần sau vẫn có animation
         requestAnimationFrame(() => ring.style.transition = '');
         verdict.textContent = '—';
         verdict.className   = 'circle-verdict';
-        sub.textContent     = 'Chưa quét';
+        sub.textContent     = '未扫描';
         sub.className       = 'circle-sub';
     }
 
+    function updateQtyDisplay() {
+        qtyValue.textContent     = qty;
+        passQtyValue.textContent = passQty;
+        ngQtyValue.textContent   = ngQty;
+    }
+
     function animateQty() {
-        qtyValue.textContent = qty;
+        updateQtyDisplay();
         qtyValue.classList.add('bump');
         setTimeout(() => qtyValue.classList.remove('bump'), 200);
     }
 
     function resetAll() {
-        qty = 0;
-        qtyValue.textContent = '0';
+        qty = 0; passQty = 0; ngQty = 0;
+        updateQtyDisplay();
         currentVerdict = null;
         btnPass.classList.remove('active');
         btnNG.classList.remove('active');
@@ -621,7 +802,6 @@
             clearSNError();
             return true;
         }
-        // Hiện lỗi
         snInput.style.borderColor = '#ef4444';
         snInput.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.18)';
         snErrorMsg.style.display  = 'block';
@@ -637,7 +817,7 @@
 
     function flashBtn(btn) {
         btn.classList.remove('flash');
-        void btn.offsetWidth; // reflow để restart animation
+        void btn.offsetWidth;
         btn.classList.add('flash');
         setTimeout(() => btn.classList.remove('flash'), 200);
     }
