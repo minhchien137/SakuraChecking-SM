@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ScanCheckSakura</title>
+    <link rel="icon" type="image/jpeg" href="~/images/sigmalogo.jpg" />
+    <title>Sakura Tools</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -65,17 +66,14 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">FG Check</a>
+                            <a class="nav-link" asp-area="" asp-controller="FGCheck" asp-action="CBCP">FG</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Back Panel Check</a>
+                            <a class="nav-link" asp-area="" asp-controller="FQC" asp-action="FQCBP">FQCBP</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Middel Panel Check</a>
-                        </li>
-                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Top Panel Check</a>
-                        </li>
+                        @* <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="" asp-action="">Middle Panel Check</a>
+                        </li> *@
                         <!-- Bạn có thể thêm menu khác ở đây nếu cần -->
                     </ul>
                 </div>

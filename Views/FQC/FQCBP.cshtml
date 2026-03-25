@@ -1,0 +1,628 @@
+@{
+    ViewData["Title"] = "FQCBP";
+}
+
+<style>
+    :root {
+        --bg-primary:    #0f1217;
+        --bg-secondary:  #1a1f27;
+        --bg-tertiary:   #242a35;
+        --text-primary:  #e2e8f0;
+        --text-secondary:#94a3b8;
+        --text-tertiary: #64748b;
+        --border:        #2d3748;
+        --accent:        #3b82f6;
+        --pass-color:    #22c55e;
+        --pass-bg:       rgba(34,197,94,0.12);
+        --ng-color:      #ef4444;
+        --ng-bg:         rgba(239,68,68,0.12);
+        --radius:        10px;
+    }
+
+    body { background: var(--bg-primary); color: var(--text-primary); }
+
+    .fqc-wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2.5rem 2rem 4rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .fqc-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .fqc-header h1 { font-size: 2rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .fqc-header p  { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+
+    /* ── 2 cột chính ────────────────────────────────────── */
+    .fqc-body {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        gap: 0 3rem;
+        align-items: start;
+    }
+
+    @@media (max-width: 768px) {
+        .fqc-body { grid-template-columns: 1fr; gap: 2.5rem 0; }
+        .fqc-divider { display: none; }
+    }
+
+    .fqc-divider { width: 1px; align-self: stretch; background: var(--border); }
+
+    /* ══════════════════════════════════════════════════════
+       LEFT PANEL
+    ══════════════════════════════════════════════════════ */
+    .left-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .field-group { display: flex; flex-direction: column; gap: 0.45rem; }
+
+    .field-group label {
+        font-size: 0.82rem; font-weight: 600;
+        letter-spacing: 0.07em; text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+
+    .field-group input {
+        padding: 13px 15px; font-size: 1.15rem;
+        font-family: 'Courier New', monospace;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-primary);
+        outline: none; width: 100%;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field-group input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.18);
+        background: var(--bg-secondary);
+    }
+
+    /* ── WO action buttons ───────────────────────────────── */
+    .wo-actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; align-items: center; flex-wrap: wrap; }
+
+    .btn-wo {
+        padding: 6px 16px; font-size: 0.8rem; font-weight: 600;
+        border-radius: 7px; cursor: pointer;
+        border: 1px solid var(--border); transition: all 0.15s;
+        letter-spacing: 0.03em;
+    }
+
+    .btn-wo-save {
+        background: rgba(59,130,246,0.12); color: var(--accent);
+        border-color: rgba(59,130,246,0.3);
+    }
+    .btn-wo-save:hover { background: rgba(59,130,246,0.22); border-color: var(--accent); }
+
+    .btn-wo-remove {
+        background: rgba(239,68,68,0.08); color: var(--ng-color);
+        border-color: rgba(239,68,68,0.25);
+    }
+    .btn-wo-remove:hover { background: rgba(239,68,68,0.18); border-color: var(--ng-color); }
+
+    .saved-wo-chip {
+        display: none; align-items: center; gap: 0.5rem;
+        padding: 5px 12px;
+        background: rgba(59,130,246,0.08);
+        border: 1px solid rgba(59,130,246,0.2);
+        border-radius: 20px; font-size: 0.78rem;
+        color: var(--accent); font-family: 'Courier New', monospace;
+    }
+    .saved-wo-chip.visible { display: inline-flex; }
+    .saved-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    .field-separator { height: 1px; background: var(--border); margin: 0.25rem 0; }
+
+    /* ── PASS / NG buttons ───────────────────────────────── */
+    .verdict-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-verdict {
+        padding: 14px; font-size: 1.1rem; font-weight: 700;
+        letter-spacing: 0.06em; border: 2px solid transparent;
+        border-radius: var(--radius); cursor: pointer; transition: all 0.15s;
+    }
+
+    .btn-pass {
+        background: var(--pass-bg); color: var(--pass-color);
+        border-color: rgba(34,197,94,0.25);
+    }
+    .btn-pass:hover, .btn-pass.active {
+        background: rgba(34,197,94,0.22); border-color: var(--pass-color);
+        box-shadow: 0 0 0 3px rgba(34,197,94,0.12);
+    }
+    .btn-pass.flash {
+        animation: flash-pass 0.2s ease-out;
+    }
+    @@keyframes flash-pass {
+        0%   { box-shadow: 0 0 0 3px rgba(34,197,94,0.8), 0 0 18px 6px rgba(34,197,94,0.5); border-color: var(--pass-color); }
+        100% { box-shadow: 0 0 0 3px rgba(34,197,94,0); }
+    }
+
+    .btn-ng {
+        background: var(--ng-bg); color: var(--ng-color);
+        border-color: rgba(239,68,68,0.25);
+    }
+    .btn-ng:hover, .btn-ng.active {
+        background: rgba(239,68,68,0.22); border-color: var(--ng-color);
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+    .btn-ng.flash {
+        animation: flash-ng 0.2s ease-out;
+    }
+    @@keyframes flash-ng {
+        0%   { box-shadow: 0 0 0 3px rgba(239,68,68,0.8), 0 0 18px 6px rgba(239,68,68,0.5); border-color: var(--ng-color); }
+        100% { box-shadow: 0 0 0 3px rgba(239,68,68,0); }
+    }
+
+    /* ── Keyboard hint ───────────────────────────────────── */
+    .keyboard-hint {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.4rem;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .keyboard-hint .hint-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    kbd.key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 5px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-bottom: 2px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-family: system-ui, sans-serif;
+        font-weight: 600;
+        color: var(--text-secondary);
+        line-height: 1;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       RIGHT PANEL
+    ══════════════════════════════════════════════════════ */
+    .right-panel {
+        display: flex; flex-direction: column;
+        align-items: center; gap: 1.5rem; padding-top: 0.5rem;
+    }
+
+    .wo-display { text-align: center; width: 100%; }
+
+    .wo-display__label {
+        font-size: 0.72rem; font-weight: 600;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-tertiary); margin-bottom: 0.4rem;
+    }
+
+    .wo-display__value {
+        font-size: 1.4rem; font-weight: 700;
+        font-family: 'Courier New', monospace;
+        color: var(--text-primary); min-height: 2rem; letter-spacing: 0.04em;
+    }
+    .wo-display__value.empty { color: var(--text-tertiary); font-size: 1rem; font-weight: 400; }
+
+    .qty-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem 2rem; text-align: center; width: 100%;
+    }
+
+    .qty-card__label {
+        font-size: 0.72rem; font-weight: 600;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-tertiary); margin-bottom: 0.3rem;
+    }
+
+    .qty-card__value {
+        font-size: 2.8rem; font-weight: 700; line-height: 1;
+        color: var(--accent); font-family: 'Courier New', monospace;
+        transition: transform 0.2s;
+    }
+    .qty-card__value.bump { transform: scale(1.2); }
+
+    /* Circle */
+    .circle-wrap  { position: relative; width: 180px; height: 180px; }
+    .circle-bg    { fill: none; stroke: var(--border); stroke-width: 8; }
+
+    .circle-ring {
+        fill: none; stroke-width: 8; stroke-linecap: round;
+        transform-origin: 50% 50%; transform: rotate(-90deg);
+        stroke-dasharray: 503;
+        stroke-dashoffset: 503;
+        stroke: var(--border);
+        transition: stroke-dashoffset 0.3s ease, stroke 0.2s ease;
+    }
+    .circle-ring.pass { stroke: var(--pass-color); stroke-dashoffset: 0; }
+    .circle-ring.ng   { stroke: var(--ng-color);   stroke-dashoffset: 0; }
+
+    .circle-inner {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 5px;
+    }
+
+    .circle-verdict {
+        font-size: 2.6rem; font-weight: 700; line-height: 1;
+        color: var(--text-tertiary); transition: color 0.1s;
+    }
+    .circle-verdict.pass { color: var(--pass-color); }
+    .circle-verdict.ng   { color: var(--ng-color); }
+
+    .circle-sub {
+        font-size: 0.9rem; color: var(--text-secondary);
+        text-align: center; transition: color 0.1s;
+    }
+    .circle-sub.pass { color: var(--pass-color); }
+    .circle-sub.ng   { color: var(--ng-color); }
+</style>
+
+<div class="fqc-wrap">
+
+    <!-- Header -->
+    <div class="fqc-header">
+        <h1>FQC</h1>
+    </div>
+
+    <!-- Body -->
+    <div class="fqc-body">
+
+        <!-- ═══ LEFT ═══ -->
+        <div class="left-panel">
+
+            @Html.AntiForgeryToken()
+
+            <!-- Work Order -->
+            <div class="field-group">
+                <label for="WorkOrder">工单 / Work Order</label>
+                <input type="text" id="WorkOrder"
+                       placeholder="请输入工单 / Scan Work Order..."
+                       autocomplete="off" />
+                <div class="wo-actions">
+                    <button type="button" class="btn-wo btn-wo-save" id="btnSaveWO">保存/Save</button>
+                    <button type="button" class="btn-wo btn-wo-remove" id="btnRemoveWO">移除/Remove</button>
+                    <span class="saved-wo-chip" id="savedWOChip">
+                        <span class="saved-dot"></span>
+                        <span id="savedWOText"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="field-separator"></div>
+
+            <!-- Serial Number -->
+            <div class="field-group">
+                <label for="SerialNumber">序列号 / Serial Number</label>
+                <input type="text" id="SerialNumber"
+                       placeholder="请输入序列号 / Scan Serial Number..."
+                       maxlength="15"
+                       style="text-transform:uppercase;"
+                       autocomplete="off" />
+            </div>
+
+            <!-- PASS / NG buttons -->
+            <div class="verdict-row">
+                <button type="button" class="btn-verdict btn-pass" id="btnPass">✓ PASS</button>
+                <button type="button" class="btn-verdict btn-ng"   id="btnNG">✕ NG</button>
+            </div>
+
+            <!-- Keyboard hint -->
+            <div class="keyboard-hint">
+                <div class="hint-item">
+                    <kbd class="key">1</kbd>
+                    <span>PASS</span>
+                </div>
+                <div class="hint-item">
+                    <kbd class="key">2</kbd>
+                    <span>NG</span>
+                </div>
+                <div class="hint-item">
+                    <kbd class="key">Esc</kbd>
+                    <span>删除</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Divider -->
+        <div class="fqc-divider"></div>
+
+        <!-- ═══ RIGHT ═══ -->
+        <div class="right-panel">
+
+            <!-- Work Order display -->
+            <div class="wo-display">
+                <div class="wo-display__label">工单 / Work Order</div>
+                <div class="wo-display__value empty" id="woDisplayValue">未输入 / Not Entered</div>
+            </div>
+
+            <!-- QTY -->
+            <div class="qty-card">
+                <div class="qty-card__label">数量 / Qty</div>
+                <div class="qty-card__value" id="qtyValue">0</div>
+            </div>
+
+            <!-- Circle -->
+            <div class="circle-wrap">
+                <svg width="180" height="180" viewBox="0 0 180 180">
+                    <circle class="circle-bg" cx="90" cy="90" r="80" />
+                    <circle class="circle-ring" id="circleRing" cx="90" cy="90" r="80" />
+                </svg>
+                <div class="circle-inner">
+                    <span class="circle-verdict" id="circleVerdict">—</span>
+                    <span class="circle-sub"     id="circleSub">未扫描</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    'use strict';
+
+    // ── Elements ──────────────────────────────────────────
+    const woInput      = document.getElementById('WorkOrder');
+    const snInput      = document.getElementById('SerialNumber');
+    const btnSaveWO    = document.getElementById('btnSaveWO');
+    const btnRemoveWO  = document.getElementById('btnRemoveWO');
+    const savedWOChip  = document.getElementById('savedWOChip');
+    const savedWOText  = document.getElementById('savedWOText');
+    const btnPass      = document.getElementById('btnPass');
+    const btnNG        = document.getElementById('btnNG');
+    const woDisplay    = document.getElementById('woDisplayValue');
+    const qtyValue     = document.getElementById('qtyValue');
+    const ring         = document.getElementById('circleRing');
+    const verdict      = document.getElementById('circleVerdict');
+    const sub          = document.getElementById('circleSub');
+
+    // ── State ─────────────────────────────────────────────
+    const STORAGE_KEY  = 'fqcbp_saved_wo';
+    let qty            = 0;
+    let currentVerdict = null; // 'pass' | 'ng' | null
+
+    // ── Khởi động: load WO đã lưu ────────────────────────
+    const savedWO = localStorage.getItem(STORAGE_KEY);
+    if (savedWO) {
+        woInput.value = savedWO;
+        updateWODisplay(savedWO);
+        showSavedChip(savedWO);
+        snInput.focus();
+    } else {
+        woInput.focus();
+    }
+
+    // ── Sync WO display khi gõ ────────────────────────────
+    woInput.addEventListener('input', function () {
+        updateWODisplay(this.value.trim() || null);
+    });
+
+    // Scanner quét WO → Enter → chuyển sang SN
+    woInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!this.value.trim()) { flashInput(woInput); return; }
+            snInput.focus();
+        }
+    });
+
+    // ── Save WO ───────────────────────────────────────────
+    btnSaveWO.addEventListener('click', function () {
+        const wo = woInput.value.trim();
+        if (!wo) { flashInput(woInput); return; }
+        localStorage.setItem(STORAGE_KEY, wo);
+        showSavedChip(wo);
+        snInput.focus();
+    });
+
+    // ── Remove saved WO ───────────────────────────────────
+    btnRemoveWO.addEventListener('click', function () {
+        localStorage.removeItem(STORAGE_KEY);
+        woInput.value = '';
+        updateWODisplay(null);
+        hideSavedChip();
+        resetAll();
+        woInput.focus();
+    });
+
+    // ── PASS button click ─────────────────────────────────
+    btnPass.addEventListener('click', function () {
+        if (snInput.value.trim()) submitScan('PASS');
+    });
+
+    // ── NG button click ───────────────────────────────────
+    btnNG.addEventListener('click', function () {
+        if (snInput.value.trim()) submitScan('NG');
+    });
+
+    // ── Serial Number input ───────────────────────────────
+    snInput.addEventListener('input', function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 15);
+    });
+
+    // Scanner tự gửi Enter sau khi quét → blur ô SN
+    // Người dùng bấm 1/2 → global keydown bắt được bình thường
+    snInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur(); // ← nhả focus, sẵn sàng nhận 1/2
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            this.value = '';
+            this.focus();
+            resetCircle();
+        }
+    });
+
+    // ── Global keyboard shortcuts ─────────────────────────
+    document.addEventListener('keydown', function (e) {
+        const tag = e.target.tagName;
+
+        // Bỏ qua nếu đang focus input (trừ SN đã xử lý riêng bên trên)
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+        // Phím 1 → PASS
+        if (e.key === '1') {
+            e.preventDefault();
+            flashBtn(btnPass);
+            if (snInput.value.trim()) {
+                submitScan('PASS');
+            } else {
+                snInput.focus();
+            }
+        }
+
+        // Phím 2 → NG
+        if (e.key === '2') {
+            e.preventDefault();
+            flashBtn(btnNG);
+            if (snInput.value.trim()) {
+                submitScan('NG');
+            } else {
+                snInput.focus();
+            }
+        }
+
+        // Esc → xóa SN
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            snInput.value = '';
+            snInput.focus();
+            resetCircle();
+        }
+    });
+
+    // ══════════════════════════════════════════════════════
+    // Scan logic (UI only — sẽ kết nối API sau)
+    // ══════════════════════════════════════════════════════
+    function submitScan(verdictStr) {
+        const wo = woInput.value.trim();
+        const sn = snInput.value.trim();
+
+        if (!wo) { flashInput(woInput); woInput.focus(); return; }
+        if (!sn) { flashInput(snInput); snInput.focus(); return; }
+
+        const isPass = verdictStr === 'PASS';
+
+        // Tăng QTY
+        qty++;
+        animateQty();
+
+        // Hiện circle
+        showCircle(isPass ? 'pass' : 'ng');
+
+        // Xóa SN, tắt active nút PASS/NG, focus lại ô SN để quét tiếp
+        snInput.value = '';
+        setVerdict(null);
+        snInput.focus();
+
+        // Reset circle sau 2 giây
+        setTimeout(resetCircle, 2000);
+    }
+
+    // ── UI helpers ────────────────────────────────────────
+
+    function updateWODisplay(value) {
+        if (value) {
+            woDisplay.textContent = value;
+            woDisplay.classList.remove('empty');
+        } else {
+            woDisplay.textContent = '未输入';
+            woDisplay.classList.add('empty');
+        }
+    }
+
+    function showSavedChip(wo) {
+        savedWOText.textContent = wo;
+        savedWOChip.classList.add('visible');
+    }
+
+    function hideSavedChip() {
+        savedWOChip.classList.remove('visible');
+        savedWOText.textContent = '';
+    }
+
+    function setVerdict(v) {
+        currentVerdict = v;
+        btnPass.classList.toggle('active', v === 'pass');
+        btnNG.classList.toggle('active',   v === 'ng');
+    }
+
+    function showCircle(state) {
+        ring.setAttribute('class', 'circle-ring ' + state);
+        verdict.textContent = state === 'pass' ? 'PASS' : 'NG';
+        verdict.className   = 'circle-verdict ' + state;
+        sub.textContent     = state === 'pass' ? 'PASS' : 'NG';
+        sub.className       = 'circle-sub ' + state;
+    }
+
+    function resetCircle() {
+        // Tắt transition để reset tức thì, không animate ngược lại
+        ring.style.transition = 'none';
+        ring.setAttribute('class', 'circle-ring');
+        // Bật lại transition sau 1 frame để lần sau vẫn có animation
+        requestAnimationFrame(() => ring.style.transition = '');
+        verdict.textContent = '—';
+        verdict.className   = 'circle-verdict';
+        sub.textContent     = '未扫描';
+        sub.className       = 'circle-sub';
+    }
+
+    function animateQty() {
+        qtyValue.textContent = qty;
+        qtyValue.classList.add('bump');
+        setTimeout(() => qtyValue.classList.remove('bump'), 200);
+    }
+
+    function resetAll() {
+        qty = 0;
+        qtyValue.textContent = '0';
+        currentVerdict = null;
+        btnPass.classList.remove('active');
+        btnNG.classList.remove('active');
+        resetCircle();
+    }
+
+    function flashBtn(btn) {
+        btn.classList.remove('flash');
+        void btn.offsetWidth; // reflow để restart animation
+        btn.classList.add('flash');
+        setTimeout(() => btn.classList.remove('flash'), 200);
+    }
+
+    function flashInput(el) {
+        el.style.borderColor = '#ef4444';
+        el.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.18)';
+        setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow   = '';
+        }, 800);
+    }
+
+}());
+</script>
+}

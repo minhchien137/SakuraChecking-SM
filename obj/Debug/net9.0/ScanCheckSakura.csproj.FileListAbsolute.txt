@@ -145,6 +145,7 @@ C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.csproj.CoreCompileInputs.cac
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.MvcApplicationPartsAssemblyInfo.cache
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.RazorAssemblyInfo.cache
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.RazorAssemblyInfo.cs
+C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.sourcelink.json
 C:\ScanCheckSakura\obj\Debug\net9.0\rjimswa.dswa.cache.json
 C:\ScanCheckSakura\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 C:\ScanCheckSakura\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
@@ -226,3 +227,4 @@ C:\ScanCheckSakura\obj\Debug\net9.0\refint\ScanCheckSakura.dll
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.pdb
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.genruntimeconfig.cache
 C:\ScanCheckSakura\obj\Debug\net9.0\ref\ScanCheckSakura.dll
+C:\ScanCheckSakura\bin\Debug\net9.0\dotnet-tools.json
