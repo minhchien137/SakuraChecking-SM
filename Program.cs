@@ -22,15 +22,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UsePathBase("/ScanCheck");
+// app.UsePathBase("/ScanCheck");
 
-app.Use((context, next) =>
-{
-    context.Request.PathBase = "/ScanCheck";
-    return next();
-});
+// app.Use((context, next) =>
+// {
+//     context.Request.PathBase = "/ScanCheck";
+//     return next();
+// });
 
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 app.MapStaticAssets();

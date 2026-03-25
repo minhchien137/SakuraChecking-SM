@@ -298,6 +298,7 @@
                 <label for="WorkOrder">工单 / Work Order</label>
                 <input type="text" id="WorkOrder"
                        placeholder="请输入工单 / Scan Work Order..."
+                       style="text-transform:uppercase;"
                        autocomplete="off" />
                 <div class="wo-actions">
                     <button type="button" class="btn-wo btn-wo-save" id="btnSaveWO">保存/Save</button>
@@ -315,10 +316,13 @@
             <div class="field-group">
                 <label for="SerialNumber">序列号 / Serial Number</label>
                 <input type="text" id="SerialNumber"
-                       placeholder="请输入序列号 / Scan Serial Number..."
+                       placeholder="请输入序列号/Scan Serial Number..."
                        maxlength="15"
                        style="text-transform:uppercase;"
                        autocomplete="off" />
+                <span id="snErrorMsg" style="display:none; color:#ef4444; font-size:0.8rem; margin-top:0.25rem;">
+                    ⚠ 序列号无效 — 必须为15位字符
+                </span>
             </div>
 
             <!-- PASS / NG buttons -->
@@ -339,7 +343,7 @@
                 </div>
                 <div class="hint-item">
                     <kbd class="key">Esc</kbd>
-                    <span>删除</span>
+                    <span>✕ Serial Number</span>
                 </div>
             </div>
 
@@ -354,12 +358,12 @@
             <!-- Work Order display -->
             <div class="wo-display">
                 <div class="wo-display__label">工单 / Work Order</div>
-                <div class="wo-display__value empty" id="woDisplayValue">未输入 / Not Entered</div>
+                <div class="wo-display__value empty" id="woDisplayValue">未输入/Not Entered</div>
             </div>
 
             <!-- QTY -->
             <div class="qty-card">
-                <div class="qty-card__label">数量 / Qty</div>
+                <div class="qty-card__label">数量 / Quantity</div>
                 <div class="qty-card__value" id="qtyValue">0</div>
             </div>
 
@@ -398,6 +402,7 @@
     const ring         = document.getElementById('circleRing');
     const verdict      = document.getElementById('circleVerdict');
     const sub          = document.getElementById('circleSub');
+    const snErrorMsg   = document.getElementById('snErrorMsg');
 
     // ── State ─────────────────────────────────────────────
     const STORAGE_KEY  = 'fqcbp_saved_wo';
@@ -461,28 +466,30 @@
     // ── Serial Number input ───────────────────────────────
     snInput.addEventListener('input', function () {
         this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 15);
+        clearSNError();
     });
 
-    // Scanner tự gửi Enter sau khi quét → blur ô SN
-    // Người dùng bấm 1/2 → global keydown bắt được bình thường
+ 
     snInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            this.blur(); // ← nhả focus, sẵn sàng nhận 1/2
+            if (!validateSN()) return;
+            this.blur(); 
         }
         if (e.key === 'Escape') {
             e.preventDefault();
             this.value = '';
+            clearSNError();
             this.focus();
             resetCircle();
         }
     });
 
-    // ── Global keyboard shortcuts ─────────────────────────
+    // ── Global keyboard shortcuts ───
     document.addEventListener('keydown', function (e) {
         const tag = e.target.tagName;
 
-        // Bỏ qua nếu đang focus input (trừ SN đã xử lý riêng bên trên)
+  
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
         // Phím 1 → PASS
@@ -525,6 +532,7 @@
 
         if (!wo) { flashInput(woInput); woInput.focus(); return; }
         if (!sn) { flashInput(snInput); snInput.focus(); return; }
+        if (!validateSN()) return;
 
         const isPass = verdictStr === 'PASS';
 
@@ -551,7 +559,7 @@
             woDisplay.textContent = value;
             woDisplay.classList.remove('empty');
         } else {
-            woDisplay.textContent = '未输入';
+            woDisplay.textContent = 'Chưa nhập';
             woDisplay.classList.add('empty');
         }
     }
@@ -588,7 +596,7 @@
         requestAnimationFrame(() => ring.style.transition = '');
         verdict.textContent = '—';
         verdict.className   = 'circle-verdict';
-        sub.textContent     = '未扫描';
+        sub.textContent     = 'Chưa quét';
         sub.className       = 'circle-sub';
     }
 
@@ -605,6 +613,26 @@
         btnPass.classList.remove('active');
         btnNG.classList.remove('active');
         resetCircle();
+    }
+
+    function validateSN() {
+        const sn = snInput.value.trim();
+        if (sn.length === 15) {
+            clearSNError();
+            return true;
+        }
+        // Hiện lỗi
+        snInput.style.borderColor = '#ef4444';
+        snInput.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.18)';
+        snErrorMsg.style.display  = 'block';
+        snInput.focus();
+        return false;
+    }
+
+    function clearSNError() {
+        snInput.style.borderColor = '';
+        snInput.style.boxShadow   = '';
+        snErrorMsg.style.display  = 'none';
     }
 
     function flashBtn(btn) {
