@@ -27,22 +27,22 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// app.UsePathBase("/ScanCheck");
+app.UsePathBase("/ScanCheck");
 
-// app.Use((context, next) =>
-// {
-//     context.Request.PathBase = "/ScanCheck";
-//     return next();
-// });
+app.Use((context, next) =>
+{
+    context.Request.PathBase = "/ScanCheck";
+    return next();
+});
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=FGCheck}/{action=CBCP}/{id?}")
+    pattern: "{controller=FGCheck}/{action=FQCBP}/{id?}")
     .WithStaticAssets();
 
 

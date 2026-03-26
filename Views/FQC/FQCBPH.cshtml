@@ -1,0 +1,484 @@
+@model ScanCheckSakura.Models.FQCBPLogViewModel
+@{
+    ViewData["Title"] = "FQC 检查历史 Inspection History";
+}
+
+<style>
+    :root {
+        --bg-primary:    #0f1217;
+        --bg-secondary:  #1a1f27;
+        --bg-tertiary:   #242a35;
+        --text-primary:  #e2e8f0;
+        --text-secondary:#94a3b8;
+        --text-tertiary: #64748b;
+        --border:        #2d3748;
+        --accent:        #3b82f6;
+        --pass-color:    #22c55e;
+        --pass-bg:       rgba(34,197,94,0.12);
+        --ng-color:      #ef4444;
+        --ng-bg:         rgba(239,68,68,0.12);
+        --radius:        10px;
+    }
+
+    body { background: var(--bg-primary); color: var(--text-primary); }
+
+    .log-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2.5rem 2rem 4rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .log-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .log-header__left h1 { font-size: 1.6rem; font-weight: 600; margin: 0 0 0.3rem; }
+    .log-header__left p  { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 8px 16px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        text-decoration: none;
+        transition: color 0.15s, border-color 0.15s;
+    }
+
+    .btn-back:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+
+    /* ── Stat chips ─────────────────────────────────────── */
+    .stat-row { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; }
+
+    .stat-chip {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 110px;
+    }
+
+    .stat-chip__val { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-chip__lbl { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    /* ── Filter panel ───────────────────────────────────── */
+    .filter-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1.2fr 130px 150px 150px auto;
+        gap: 0.75rem 1rem;
+        align-items: end;
+    }
+
+    @@media (max-width: 1100px) {
+        .filter-grid { grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    @@media (max-width: 640px) {
+        .filter-grid { grid-template-columns: 1fr; }
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+
+    .filter-group label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+    }
+
+    .filter-group input,
+    .filter-group select {
+        padding: 0 11px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+        height: 36px;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus { border-color: var(--accent); }
+
+    .filter-group select option { background: var(--bg-tertiary); }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .btn-filter {
+        padding: 0 18px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background 0.15s;
+        height: 36px;
+        white-space: nowrap;
+    }
+
+    .btn-filter:hover { background: #2563eb; }
+
+    .btn-reset-filter {
+        padding: 0 14px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        height: 36px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.15s, border-color 0.15s;
+        white-space: nowrap;
+    }
+
+    .btn-reset-filter:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+
+    .btn-excel {
+        padding: 0 14px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: #166534;
+        color: #bbf7d0;
+        border: 1px solid #15803d;
+        border-radius: 7px;
+        height: 36px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background 0.15s;
+        white-space: nowrap;
+    }
+
+    .btn-excel:hover { background: #15803d; color: #bbf7d0; }
+
+    /* ── Table ──────────────────────────────────────────── */
+    .table-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .table-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .table-toolbar__info { font-size: 0.82rem; color: var(--text-tertiary); }
+
+    .table-scroll {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: calc(100vh - 420px);
+        min-height: 300px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--bg-tertiary) transparent;
+    }
+
+    .table-scroll::-webkit-scrollbar       { width: 5px; height: 5px; }
+    .table-scroll::-webkit-scrollbar-track { background: transparent; }
+    .table-scroll::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.855rem; }
+
+    .log-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--bg-tertiary);
+        padding: 10px 14px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    .log-table tbody tr { border-bottom: 1px solid rgba(45,55,72,0.5); transition: background 0.1s; }
+    .log-table tbody tr:last-child { border-bottom: none; }
+    .log-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+    .log-table td { padding: 9px 14px; color: var(--text-primary); vertical-align: middle; white-space: nowrap; }
+
+    .td-mono { font-family: 'Courier New', monospace; font-size: 0.82rem; }
+    .td-time { font-size: 0.8rem; color: var(--text-tertiary); }
+
+    .pill {
+        display: inline-block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+
+    .pill-pass { background: var(--pass-bg); color: var(--pass-color); }
+    .pill-ng   { background: var(--ng-bg);   color: var(--ng-color);   }
+
+    .table-empty { padding: 3rem; text-align: center; color: var(--text-tertiary); font-size: 0.9rem; }
+
+    /* ── Pagination ─────────────────────────────────────── */
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border);
+        flex-wrap: wrap;
+    }
+
+    .page-btn {
+        padding: 5px 11px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background 0.1s, color 0.1s;
+        min-width: 34px;
+        text-align: center;
+    }
+
+    .page-btn:hover  { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+</style>
+
+<div class="log-wrap">
+
+    <!-- Header -->
+    <div class="log-header">
+        <div class="log-header__left">
+            <h1>FQC 检查历史 Inspection History</h1>
+            <p>所有FQC序列号检查结果 All FQC Serial Number Check Results</p>
+        </div>
+        <a asp-action="FQCBP" asp-controller="FQC" class="btn-back">← 返回检查 Back to Check</a>
+    </div>
+
+    <!-- Stat chips -->
+    <div class="stat-row">
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--text-primary)">@Model.TotalCount</span>
+            <span class="stat-chip__lbl">总数 TOTAL</span>
+        </div>
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--pass-color)">@Model.PassCount</span>
+            <span class="stat-chip__lbl">通过 PASS</span>
+        </div>
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--ng-color)">@Model.NgCount</span>
+            <span class="stat-chip__lbl">不良 NG</span>
+        </div>
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--accent)">
+                @(Model.TotalCount > 0 ? Math.Round((double)Model.PassCount / Model.TotalCount * 100, 1) : 0)%
+            </span>
+            <span class="stat-chip__lbl">通过率 PASS RATE</span>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-panel">
+        <form asp-action="FQCBP" asp-controller="FQC" method="get">
+            <div class="filter-grid">
+
+                <div class="filter-group">
+                    <label>工单 Work Order</label>
+                    <input type="text" name="WorkOrder" value="@Model.Filter.WorkOrder"
+                           placeholder="搜索工单 Search WO..." />
+                </div>
+
+                <div class="filter-group">
+                    <label>序列号 Serial Number</label>
+                    <input type="text" name="SerialNumber" value="@Model.Filter.SerialNumber"
+                           placeholder="搜索序列号 Search SN..." />
+                </div>
+
+                <div class="filter-group">
+                    <label>状态 Status</label>
+                    <select name="Status">
+                        <option value=""     selected="@(string.IsNullOrEmpty(Model.Filter.Status) ? "selected" : null)">-- 全部 All --</option>
+                        <option value="PASS" selected="@(Model.Filter.Status == "PASS" ? "selected" : null)">✓ PASS</option>
+                        <option value="NG"   selected="@(Model.Filter.Status == "NG"   ? "selected" : null)">✗ NG</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>开始日期 From Date</label>
+                    <input type="date" name="DateFrom" value="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="filter-group">
+                    <label>结束日期 To Date</label>
+                    <input type="date" name="DateTo" value="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <input type="hidden" name="Page"     value="1" />
+                <input type="hidden" name="PageSize" value="@Model.Filter.PageSize" />
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter">筛选 Filter</button>
+                    <a asp-action="FQCBPH" asp-controller="FQC" class="btn-reset-filter">重置 Reset</a>
+                    <a asp-action="FQCBPExport" asp-controller="FQC"
+                       asp-route-WorkOrder="@Model.Filter.WorkOrder"
+                       asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                       asp-route-Status="@Model.Filter.Status"
+                       asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")"
+                       class="btn-excel">↓ 导出 Export</a>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+
+        <div class="table-toolbar">
+            <span class="table-toolbar__info">
+                @if (Model.TotalCount == 0)
+                {
+                    <span>未找到记录 No records found</span>
+                }
+                else
+                {
+                    <span>
+                        显示 Showing
+                        @((Model.CurrentPage - 1) * Model.Filter.PageSize + 1)–@Math.Min(Model.CurrentPage * Model.Filter.PageSize, Model.TotalCount)
+                        / @Model.TotalCount 条记录 records
+                    </span>
+                }
+            </span>
+        </div>
+
+        <div class="table-scroll">
+            @if (!Model.Logs.Any())
+            {
+                <div class="table-empty">📭 未找到记录 No records found</div>
+            }
+            else
+            {
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>时间 TIME</th>
+                            <th>工单 WORK ORDER</th>
+                            <th>序列号 SERIAL NUMBER</th>
+                            <th>状态 STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int rowNum = (Model.CurrentPage - 1) * Model.Filter.PageSize + 1; }
+                        @foreach (var log in Model.Logs)
+                        {
+                            <tr>
+                                <td style="color:var(--text-tertiary); font-size:0.78rem;">@rowNum</td>
+                                <td class="td-time">@log.Timeline.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td class="td-mono">@log.WorkOrder</td>
+                                <td class="td-mono">@log.SerialNumber</td>
+                                <td>
+                                    <span class="pill @(log.Status == "PASS" ? "pill-pass" : "pill-ng")">
+                                        @(log.Status == "PASS" ? "✓ PASS" : "✗ NG")
+                                    </span>
+                                </td>
+                            </tr>
+                            rowNum++;
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                <a class="page-btn @(Model.CurrentPage <= 1 ? "disabled" : "")"
+                   asp-action="FQCBP" asp-controller="FQC"
+                   asp-route-Page="@(Model.CurrentPage - 1)"
+                   asp-route-PageSize="@Model.Filter.PageSize"
+                   asp-route-WorkOrder="@Model.Filter.WorkOrder"
+                   asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                   asp-route-Status="@Model.Filter.Status"
+                   asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                   asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">←</a>
+
+                @for (int p = Math.Max(1, Model.CurrentPage - 2);
+                          p <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); p++)
+                {
+                    <a class="page-btn @(p == Model.CurrentPage ? "active" : "")"
+                       asp-action="FQCBP" asp-controller="FQC"
+                       asp-route-Page="@p"
+                       asp-route-PageSize="@Model.Filter.PageSize"
+                       asp-route-WorkOrder="@Model.Filter.WorkOrder"
+                       asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                       asp-route-Status="@Model.Filter.Status"
+                       asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">@p</a>
+                }
+
+                <a class="page-btn @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")"
+                   asp-action="FQCBP" asp-controller="FQC"
+                   asp-route-Page="@(Model.CurrentPage + 1)"
+                   asp-route-PageSize="@Model.Filter.PageSize"
+                   asp-route-WorkOrder="@Model.Filter.WorkOrder"
+                   asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                   asp-route-Status="@Model.Filter.Status"
+                   asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                   asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">→</a>
+            </div>
+        }
+
+    </div>
+</div>

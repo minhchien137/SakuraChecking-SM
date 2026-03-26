@@ -314,6 +314,8 @@
 (function () {
     'use strict';
 
+     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+
     const boxEl        = document.getElementById('BoxSN');
     const prodEl       = document.getElementById('ProductSN');
     const btnCheck     = document.getElementById('btnCheck');
@@ -370,7 +372,7 @@
             fd.append('productSN', prod);
             fd.append('__RequestVerificationToken', token);
 
-            const resp = await fetch('/FGCheck/CBCPCheck', { method: 'POST', body: fd });
+            const resp = await fetch(`${pathBase}/FGCheck/CBCPCheck`, { method: 'POST', body: fd });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
             const data = await resp.json();
