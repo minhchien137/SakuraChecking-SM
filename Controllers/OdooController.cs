@@ -306,6 +306,7 @@ public class OdooController : ControllerBase
     }
 
     // =====================================================================
+    // GET Work Order by Serial Number
     // GET /api/odoo/getworkorderfromserial?serial=xxx
     // =====================================================================
     [HttpGet("getworkorderfromserial")]
@@ -441,6 +442,99 @@ public class OdooController : ControllerBase
             return StatusCode(500, new { message = "Lỗi khi gọi stock.traceability.report/get_html", details = ex.Message });
         }
     }
+
+    // =====================================================================
+    // GET /api/odoo/getproductfromserial?serial=xxx
+    // Get Product from Serial Number
+    // =====================================================================
+
+
+    [HttpGet("getproductfromserial")]
+    public async Task<IActionResult> GetProductFromSerial([FromQuery] string serial)
+    {
+        if (string.IsNullOrWhiteSpace(serial))
+            return BadRequest(new { message = "serial không được rỗng." });
+
+        var (cookie, err) = await RequireCookieAsync();
+        if (err != null) return err;
+
+        // Query thẳng mrp.production theo lot_name (Lot/Serial Number field)
+        var payload = new
+        {
+            id = 19,
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                model = "mrp.production",
+                method = "web_search_read",
+                args = Array.Empty<object>(),
+                kwargs = new
+                {
+                    limit = 1,
+                    offset = 0,
+                    order = "name asc",
+                    context = new
+                    {
+                        lang = "vi_VN",
+                        tz = "Asia/Ho_Chi_Minh",
+                        uid = 2,
+                        allowed_company_ids = new[] { 1 },
+                        bin_size = true,
+                        default_company_id = 1
+                    },
+                    count_limit = 10001,
+                    domain = new object[]
+                    {
+                    new object[] { "lot_producing_id.name", "=", serial }  
+                    },
+                    fields = new[] { "name", "product_id", "lot_producing_id" }
+                }
+            }
+        };
+
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, MrpProductionUrl)
+            {
+                Content = JsonContent.Create(payload)
+            };
+            req.Headers.Add("Cookie", cookie);
+
+            var res = await _httpClient.SendAsync(req);
+            res.EnsureSuccessStatusCode();
+
+            using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync());
+
+            if (!doc.RootElement.TryGetProperty("result", out var result)
+                || !result.TryGetProperty("records", out var records)
+                || records.ValueKind != JsonValueKind.Array
+                || records.GetArrayLength() == 0)
+                return NotFound(new { message = $"Không tìm thấy MO nào có Lot/Serial = {serial}" });
+
+            var record = records[0];
+            var woName = record.GetProperty("name").GetString();
+            var productId = record.GetProperty("product_id");
+            var productIdNum = productId[0].GetInt32();
+            var productName = productId[1].GetString();
+
+            return Ok(new
+            {
+                serial,
+                workOrder = woName,           // "NM/MO/02414-001"
+                productId = productIdNum,
+                productName                     // "Sakura Folio Case, Midnight Blue, RM15A-1000NW"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gọi getproductfromserial");
+            return StatusCode(500, new { message = "Lỗi", details = ex.Message });
+        }
+    }
+
+
+
 
 
     // =====================================================================
