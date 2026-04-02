@@ -47,12 +47,11 @@ public class FQCController : Controller
         // 1. Lưu DB
         var (qty, passQty, ngQty) = await _fqcbpService.RecordScanAsync(wo, sn, req.Status);
 
-        // 2. Gửi comment Odoo — await trực tiếp để debug rõ lỗi
+        // 2. Gửi comment Odoo
         try
         {
             var commentBody = $"@FQC FQC : {req.Status}";
             await _fqcOdooService.PostCommentBySerialAsync(sn, commentBody);
-
         }
         catch (Exception ex)
         {
@@ -61,8 +60,21 @@ public class FQCController : Controller
         return Json(new { qty, passQty, ngQty });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> checkSN([FromQuery] string sn, [FromQuery] string wo)
+    {
+        if (string.IsNullOrWhiteSpace(sn))
+            return BadRequest(new { message = "该序列号已被扫描" });
 
+        sn = sn.Trim().ToUpper();
+        wo = wo?.Trim().ToUpper() ?? "";
 
+        // Check chỉ trong cùng Work Order
+        var exists = await _db.SM_FQCBP_H
+            .AnyAsync(x => x.SerialNumber == sn && x.WorkOrder == wo);
+
+        return Json(new { isDuplicate = exists });
+    }
 
     [HttpGet]
     public async Task<IActionResult> FQCBPH(FQCBPLogFilter filter)
@@ -116,11 +128,9 @@ public class FQCController : Controller
         return View(vm);
     }
 
-
- /* /FQC/FQCBPLogExport  — xuất Excel */
-
+    /* /FQC/FQCBPExport — xuất CSV với timezone UTC+8 */
     [HttpGet]
-    public async Task<IActionResult> FQCBPLogExport(FQCBPLogFilter filter)
+    public async Task<IActionResult> FQCBPExport(FQCBPLogFilter filter)
     {
         var query = _db.SM_FQCBP_H.AsQueryable();
 
@@ -141,26 +151,21 @@ public class FQCController : Controller
 
         var data = await query.OrderByDescending(x => x.Timeline).ToListAsync();
 
-        // Build CSV (không cần thư viện)
+        // Build CSV — Server UTC+7, hiển thị UTC+8 (Trung Quốc) → +1 giờ
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine("#,Work Order,Serial Number,Status,Time");
+        sb.AppendLine("#,Work Order,Serial Number,Status,Time (UTC+8)");
         int i = 1;
         foreach (var r in data)
-            sb.AppendLine($"{i++},{r.WorkOrder},{r.SerialNumber},{r.Status},{r.Timeline.ToLocalTime():dd/MM/yyyy HH:mm:ss}");
+            sb.AppendLine($"{i++},{r.WorkOrder},{r.SerialNumber},{r.Status},{r.Timeline.AddHours(1):dd/MM/yyyy HH:mm:ss}");
 
         var bytes = System.Text.Encoding.UTF8.GetPreamble()
             .Concat(System.Text.Encoding.UTF8.GetBytes(sb.ToString()))
             .ToArray();
 
-        var fileName = $"FQC_History_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var fileName = $"FQC_History_{DateTime.Now.AddHours(1):yyyyMMdd_HHmmss}.csv";
         return File(bytes, "text/csv", fileName);
     }
-
 }
-
-
-
-
 
 public class ScanRequest
 {

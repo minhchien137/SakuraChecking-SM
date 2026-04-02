@@ -105,6 +105,39 @@
         background: var(--bg-secondary);
     }
 
+    /* WO readonly */
+    .field-group input[readonly] {
+        cursor: not-allowed;
+        color: var(--text-secondary);
+        background: var(--bg-primary);
+        border-style: dashed;
+    }
+    .field-group input[readonly]:focus {
+        border-color: var(--border);
+        box-shadow: none;
+        background: var(--bg-primary);
+    }
+
+    /* WO loading */
+    .wo-loading-wrap {
+        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.78rem; color: var(--text-tertiary);
+        min-height: 1.2rem;
+    }
+    .wo-spinner {
+        display: none;
+        width: 12px; height: 12px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        flex-shrink: 0;
+    }
+    .wo-spinner.visible { display: inline-block; }
+    .wo-status-text { font-size: 0.78rem; }
+    .wo-status-text.found    { color: var(--pass-color); }
+    .wo-status-text.notfound { color: var(--ng-color); }
+
     /* Status input — highlight màu theo giá trị */
     #StatusInput.is-pass {
         border-color: var(--pass-color);
@@ -116,39 +149,6 @@
         box-shadow: 0 0 0 3px rgba(239,68,68,0.18);
         color: var(--ng-color);
     }
-
-    /* ── WO action buttons ───────────────────────────────── */
-    .wo-actions { display: flex; gap: 0.5rem; margin-top: 0.4rem; align-items: center; flex-wrap: wrap; }
-
-    .btn-wo {
-        padding: 6px 16px; font-size: 0.8rem; font-weight: 600;
-        border-radius: 7px; cursor: pointer;
-        border: 1px solid var(--border); transition: all 0.15s;
-        letter-spacing: 0.03em;
-    }
-
-    .btn-wo-save {
-        background: rgba(59,130,246,0.12); color: var(--accent);
-        border-color: rgba(59,130,246,0.3);
-    }
-    .btn-wo-save:hover { background: rgba(59,130,246,0.22); border-color: var(--accent); }
-
-    .btn-wo-remove {
-        background: rgba(239,68,68,0.08); color: var(--ng-color);
-        border-color: rgba(239,68,68,0.25);
-    }
-    .btn-wo-remove:hover { background: rgba(239,68,68,0.18); border-color: var(--ng-color); }
-
-    .saved-wo-chip {
-        display: none; align-items: center; gap: 0.5rem;
-        padding: 5px 12px;
-        background: rgba(59,130,246,0.08);
-        border: 1px solid rgba(59,130,246,0.2);
-        border-radius: 20px; font-size: 0.78rem;
-        color: var(--accent); font-family: 'Courier New', monospace;
-    }
-    .saved-wo-chip.visible { display: inline-flex; }
-    .saved-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 
     .field-separator { height: 1px; background: var(--border); margin: 0.25rem 0; }
 
@@ -314,7 +314,33 @@
     }
     .circle-sub.pass { color: var(--pass-color); }
     .circle-sub.ng   { color: var(--ng-color); }
+
+    /* ── Toast duplicate SN ──────────────────────────────── */
+    @@keyframes toastIn {
+        from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
 </style>
+
+<!-- Toast duplicate SN -->
+<div id="toastDuplicate" style="
+    display:none; position:fixed; top:28px; left:50%;
+    transform:translateX(-50%); z-index:9999;
+    background:#ffffff; border:1px solid #ef4444;
+    border-left:4px solid #ef4444; border-radius:10px;
+    padding:14px 20px; min-width:300px; max-width:460px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.35);
+    align-items:center; gap:12px;
+    color:#374151;
+">
+    <span style="font-size:1.3rem;">⚠️</span>
+    <div>
+        <div style="font-weight:700; color:#dc2626; font-size:0.88rem;">
+            序列号重复 Duplicate SN
+        </div>
+        <div id="toastMsg" style="color:#374151; font-size:0.8rem; margin-top:3px;"></div>
+    </div>
+</div>
 
 <div class="fqc-wrap">
 
@@ -334,20 +360,16 @@
 
             @Html.AntiForgeryToken()
 
-            <!-- Work Order -->
+            <!-- Work Order — readonly, auto-filled từ serial -->
             <div class="field-group">
                 <label for="WorkOrder">工单 / Work Order</label>
                 <input type="text" id="WorkOrder"
-                       placeholder="请输入工单 / Scan Work Order..."
+                       placeholder="自动填充 / Auto-filled from serial..."
                        style="text-transform:uppercase;"
-                       autocomplete="off" />
-                <div class="wo-actions">
-                    <button type="button" class="btn-wo btn-wo-save"   id="btnSaveWO">保存/Save</button>
-                    <button type="button" class="btn-wo btn-wo-remove" id="btnRemoveWO">移除/Remove</button>
-                    <span class="saved-wo-chip" id="savedWOChip">
-                        <span class="saved-dot"></span>
-                        <span id="savedWOText"></span>
-                    </span>
+                       readonly autocomplete="off" />
+                <div class="wo-loading-wrap">
+                    <span class="wo-spinner" id="woSpinner"></span>
+                    <span class="wo-status-text" id="woStatusText"></span>
                 </div>
             </div>
 
@@ -457,10 +479,8 @@
     const woInput        = document.getElementById('WorkOrder');
     const snInput        = document.getElementById('SerialNumber');
     const statusInput    = document.getElementById('StatusInput');
-    const btnSaveWO      = document.getElementById('btnSaveWO');
-    const btnRemoveWO    = document.getElementById('btnRemoveWO');
-    const savedWOChip    = document.getElementById('savedWOChip');
-    const savedWOText    = document.getElementById('savedWOText');
+    const woSpinner      = document.getElementById('woSpinner');
+    const woStatusText   = document.getElementById('woStatusText');
     const woDisplay      = document.getElementById('woDisplayValue');
     const colorDisplay   = document.getElementById('colorDisplayValue');
     const colorLoading   = document.getElementById('colorLoading');
@@ -474,63 +494,14 @@
     const statusErrorMsg = document.getElementById('statusErrorMsg');
 
     // ── State ─────────────────────────────────────────────
-    const STORAGE_KEY = 'fqcbp_saved_wo';
-    let qty     = 0;
-    let passQty = 0;
-    let ngQty   = 0;
+    let qty           = 0;
+    let passQty       = 0;
+    let ngQty         = 0;
+    let currentWO     = '';
+    let currentWoPageId = 0;
 
-    // ── Khởi động: load WO đã lưu ────────────────────────
-    const savedWO = localStorage.getItem(STORAGE_KEY);
-    if (savedWO) {
-        woInput.value = savedWO;
-        updateWODisplay(savedWO);
-        showSavedChip(savedWO);
-        fetchColor(savedWO);
-        fetchQty(savedWO);
-        snInput.focus();
-    } else {
-        woInput.focus();
-    }
-
-    // ── WO: sync display khi gõ ───────────────────────────
-    woInput.addEventListener('input', function () {
-        updateWODisplay(this.value.trim() || null);
-        updateColorDisplay(null);
-    });
-
-    // WO: Enter → fetch + chuyển sang SN
-    woInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const wo = this.value.trim();
-            if (!wo) { flashInput(woInput); return; }
-            fetchColor(wo);
-            fetchQty(wo);
-            snInput.focus();
-        }
-    });
-
-    // ── Save WO ───────────────────────────────────────────
-    btnSaveWO.addEventListener('click', function () {
-        const wo = woInput.value.trim();
-        if (!wo) { flashInput(woInput); return; }
-        localStorage.setItem(STORAGE_KEY, wo);
-        showSavedChip(wo);
-        fetchColor(wo);
-        fetchQty(wo);
-        snInput.focus();
-    });
-
-    // ── Remove saved WO ───────────────────────────────────
-    btnRemoveWO.addEventListener('click', function () {
-        localStorage.removeItem(STORAGE_KEY);
-        woInput.value = '';
-        updateWODisplay(null);
-        updateColorDisplay(null);
-        hideSavedChip();
-        resetAll();
-        woInput.focus();
-    });
+    // Focus vào SN ngay khi load
+    snInput.focus();
 
     // ── SN input ──────────────────────────────────────────
     snInput.addEventListener('input', function () {
@@ -538,21 +509,48 @@
         clearSNError();
     });
 
-    snInput.addEventListener('keydown', function (e) {
+    // ── SN keydown ────────────────────────────────────────
+    snInput.addEventListener('keydown', async function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             if (!validateSN()) return;
-            // SN hợp lệ → focus sang Status
+
+            const sn = snInput.value.trim();
+
+            // Step 1: Lookup WO từ serial
+            const wo = await fetchWOFromSerial(sn);
+            if (!wo) {
+                snInput.focus();
+                return;
+            }
+
+            // Step 2: Check duplicate trong WO vừa lấy được
+            try {
+                const res = await fetch(`${pathBase}/FQC/checkSN?sn=${encodeURIComponent(sn)}&wo=${encodeURIComponent(wo)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.isDuplicate) {
+                        showDuplicateToast(sn);
+                        snInput.value = '';
+                        clearSNError();
+                        snInput.focus();
+                        return;
+                    }
+                }
+            } catch {
+                // Lỗi mạng → vẫn cho tiếp
+            }
+
+            // Step 3: Sang Status
             statusInput.value = '';
             clearStatusError();
             statusInput.focus();
         }
+
         if (e.key === 'Escape') {
             e.preventDefault();
-            this.value = '';
-            clearSNError();
-            this.focus();
-            resetCircle();
+            resetSNAndStatus();
+            snInput.focus();
         }
     });
 
@@ -561,7 +559,6 @@
         this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4);
         clearStatusError();
 
-        // Highlight màu realtime
         const v = this.value;
         this.classList.toggle('is-pass', v === 'PASS');
         this.classList.toggle('is-ng',   v === 'NG');
@@ -584,12 +581,8 @@
         }
         if (e.key === 'Escape') {
             e.preventDefault();
-            this.value = '';
-            clearStatusError();
-            snInput.value = '';
-            clearSNError();
+            resetSNAndStatus();
             snInput.focus();
-            resetCircle();
         }
     });
 
@@ -599,14 +592,53 @@
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
         if (e.key === 'Escape') {
             e.preventDefault();
-            snInput.value    = '';
-            statusInput.value = '';
-            clearSNError();
-            clearStatusError();
+            resetSNAndStatus();
             snInput.focus();
-            resetCircle();
         }
     });
+
+    // ══════════════════════════════════════════════════════
+    // API: serial → WO
+    // ══════════════════════════════════════════════════════
+    async function fetchWOFromSerial(sn) {
+        woSpinner.classList.add('visible');
+        woStatusText.textContent = '查找工单中… / Looking up WO…';
+        woStatusText.className   = 'wo-status-text';
+
+        try {
+            const res = await fetch(`${pathBase}/api/Odoo/getworkorderfromserial?serial=${encodeURIComponent(sn)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const data = await res.json();
+            const wo   = data.workOrder;
+            if (!wo) throw new Error('No workOrder in response');
+
+            currentWO       = wo;
+            currentWoPageId = data.woPageId ?? 0;
+            woInput.value   = wo;
+            updateWODisplay(wo);
+
+            // Fetch color & qty song song
+            fetchColor(wo);
+            fetchQty(wo);
+
+            woStatusText.textContent = `✓ ${wo}`;
+            woStatusText.className   = 'wo-status-text found';
+
+            return wo;
+        } catch (err) {
+            console.error('fetchWOFromSerial error:', err);
+            currentWO     = '';
+            woInput.value = '';
+            updateWODisplay(null);
+            updateColorDisplay(null);
+            woStatusText.textContent = '✕ 找不到工单 / WO not found';
+            woStatusText.className   = 'wo-status-text notfound';
+            return null;
+        } finally {
+            woSpinner.classList.remove('visible');
+        }
+    }
 
     // ══════════════════════════════════════════════════════
     // API: fetch Color
@@ -641,17 +673,17 @@
                 ngQty   = data.ngQty   ?? 0;
                 updateQtyDisplay();
             }
-        } catch { /* giữ nguyên nếu lỗi */ }
+        } catch { }
     }
 
     // ══════════════════════════════════════════════════════
     // Scan logic
     // ══════════════════════════════════════════════════════
     async function submitScan(verdictStr) {
-        const wo = woInput.value.trim();
+        const wo = currentWO;
         const sn = snInput.value.trim();
 
-        if (!wo) { flashInput(woInput); woInput.focus(); return; }
+        if (!wo) { flashInput(woInput); snInput.focus(); return; }
         if (!sn) { flashInput(snInput); snInput.focus(); return; }
         if (!validateSN()) return;
 
@@ -660,11 +692,19 @@
         // Hiện kết quả ngay (UX nhanh)
         showCircle(isPass ? 'pass' : 'ng');
 
-        // Clear fields → focus về SN cho lần quét tiếp
+        // Clear fields → focus về SN
         snInput.value     = '';
         statusInput.value = '';
         statusInput.classList.remove('is-pass', 'is-ng');
         clearStatusError();
+        clearSNError();
+
+        // Reset WO — lần quét tiếp sẽ lookup lại từ SN mới
+        currentWO     = '';
+        woInput.value = '';
+        updateWODisplay(null);
+        woStatusText.textContent = '';
+
         snInput.focus();
 
         try {
@@ -725,8 +765,8 @@
                     box-shadow:0 0 0 2px rgba(255,255,255,0.15);
                     vertical-align:middle; margin-right:8px; flex-shrink:0;
                 "></span>${value}`;
-            colorDisplay.style.display     = 'flex';
-            colorDisplay.style.alignItems  = 'center';
+            colorDisplay.style.display        = 'flex';
+            colorDisplay.style.alignItems     = 'center';
             colorDisplay.style.justifyContent = 'center';
             colorDisplay.classList.remove('empty');
         } else {
@@ -734,16 +774,6 @@
             colorDisplay.style.display = '';
             colorDisplay.classList.add('empty');
         }
-    }
-
-    function showSavedChip(wo) {
-        savedWOText.textContent = wo;
-        savedWOChip.classList.add('visible');
-    }
-
-    function hideSavedChip() {
-        savedWOChip.classList.remove('visible');
-        savedWOText.textContent = '';
     }
 
     function showCircle(state) {
@@ -776,9 +806,12 @@
         setTimeout(() => qtyValue.classList.remove('bump'), 200);
     }
 
-    function resetAll() {
-        qty = 0; passQty = 0; ngQty = 0;
-        updateQtyDisplay();
+    function resetSNAndStatus() {
+        snInput.value     = '';
+        statusInput.value = '';
+        statusInput.classList.remove('is-pass', 'is-ng');
+        clearSNError();
+        clearStatusError();
         resetCircle();
     }
 
@@ -819,6 +852,33 @@
             el.style.borderColor = '';
             el.style.boxShadow   = '';
         }, 800);
+    }
+
+    // ── Toast duplicate SN ────────────────────────────────
+    let _toastTimer = null;
+    function showDuplicateToast(sn) {
+        const toast = document.getElementById('toastDuplicate');
+        document.getElementById('toastMsg').innerHTML =
+            `<b style="color:#dc2626;font-family:'Courier New',monospace">${sn}</b><br>
+             此序列号已检查，请扫描其他。Already scanned, try another.`;
+
+        toast.style.display   = 'flex';
+        toast.style.opacity   = '1';
+        toast.style.animation = 'none';
+        requestAnimationFrame(() => {
+            toast.style.animation = 'toastIn 0.25s ease';
+        });
+
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s';
+            toast.style.opacity    = '0';
+            setTimeout(() => {
+                toast.style.display    = 'none';
+                toast.style.transition = '';
+                toast.style.opacity    = '1';
+            }, 300);
+        }, 2000);
     }
 
 }());

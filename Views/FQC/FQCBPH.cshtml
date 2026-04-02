@@ -329,7 +329,7 @@
 
     <!-- Filter -->
     <div class="filter-panel">
-        <form asp-action="FQCBP" asp-controller="FQC" method="get">
+        <form asp-action="FQCBPH" asp-controller="FQC" method="get">
             <div class="filter-grid">
 
                 <div class="filter-group">
@@ -413,7 +413,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>时间 TIME</th>
+                            <th>时间 TIME (UTC+8)</th>
                             <th>工单 WORK ORDER</th>
                             <th>序列号 SERIAL NUMBER</th>
                             <th>状态 STATUS</th>
@@ -425,7 +425,7 @@
                         {
                             <tr>
                                 <td style="color:var(--text-tertiary); font-size:0.78rem;">@rowNum</td>
-                                <td class="td-time">@log.Timeline.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td class="td-time">@log.Timeline.AddHours(1).ToString("dd/MM/yyyy HH:mm:ss")</td>
                                 <td class="td-mono">@log.WorkOrder</td>
                                 <td class="td-mono">@log.SerialNumber</td>
                                 <td>
@@ -444,8 +444,10 @@
         @if (Model.TotalPages > 1)
         {
             <div class="pagination">
+
+                <!-- Prev -->
                 <a class="page-btn @(Model.CurrentPage <= 1 ? "disabled" : "")"
-                   asp-action="FQCBP" asp-controller="FQC"
+                   asp-action="FQCBPH" asp-controller="FQC"
                    asp-route-Page="@(Model.CurrentPage - 1)"
                    asp-route-PageSize="@Model.Filter.PageSize"
                    asp-route-WorkOrder="@Model.Filter.WorkOrder"
@@ -454,11 +456,12 @@
                    asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
                    asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">←</a>
 
+                <!-- Page numbers -->
                 @for (int p = Math.Max(1, Model.CurrentPage - 2);
                           p <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); p++)
                 {
                     <a class="page-btn @(p == Model.CurrentPage ? "active" : "")"
-                       asp-action="FQCBP" asp-controller="FQC"
+                       asp-action="FQCBPH" asp-controller="FQC"
                        asp-route-Page="@p"
                        asp-route-PageSize="@Model.Filter.PageSize"
                        asp-route-WorkOrder="@Model.Filter.WorkOrder"
@@ -468,8 +471,9 @@
                        asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">@p</a>
                 }
 
+                <!-- Next -->
                 <a class="page-btn @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")"
-                   asp-action="FQCBP" asp-controller="FQC"
+                   asp-action="FQCBPH" asp-controller="FQC"
                    asp-route-Page="@(Model.CurrentPage + 1)"
                    asp-route-PageSize="@Model.Filter.PageSize"
                    asp-route-WorkOrder="@Model.Filter.WorkOrder"
@@ -477,6 +481,7 @@
                    asp-route-Status="@Model.Filter.Status"
                    asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
                    asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">→</a>
+
             </div>
         }
 

@@ -29,7 +29,7 @@ public class OdooController : ControllerBase
         _logger = logger;
     }
 
-    // ── Helper: lấy cookie từ DB (giữ nguyên của bạn) ────────────────────
+    // ── Helper: lấy cookie từ DB ────────────────────────────────────────
     private async Task<string?> GetCookieFromDbAsync()
     {
         var record = await _db.SM_Defect_Cookie.FirstOrDefaultAsync();
@@ -41,7 +41,6 @@ public class OdooController : ControllerBase
         return record.cookie;
     }
 
-
     private async Task<(string? cookie, IActionResult? error)> RequireCookieAsync()
     {
         var cookie = await GetCookieFromDbAsync();
@@ -50,7 +49,7 @@ public class OdooController : ControllerBase
         return (cookie, null);
     }
 
-    // ── Helper: build payload comment ──
+    // ── Helper: build payload comment ──────────────────────────────────
     private static object BuildCommentPayload(string body, int threadId) => new
     {
         id = 13,
@@ -183,7 +182,6 @@ public class OdooController : ControllerBase
 
     // =====================================================================
     // POST /api/odoo/postcomment
-    // Gửi comment qua threadId trực tiếp
     // =====================================================================
     [HttpPost("postcomment")]
     public async Task<IActionResult> PostComment([FromBody] OdooCommentRequest req)
@@ -219,7 +217,6 @@ public class OdooController : ControllerBase
 
     // =====================================================================
     // POST /api/odoo/postcommenttoWO
-    // Gửi comment qua WO code (tự lookup threadId)
     // =====================================================================
     [HttpPost("postcommenttoWO")]
     public async Task<IActionResult> PostCommentToWO([FromBody] OdooCommentRequest req)
@@ -307,6 +304,144 @@ public class OdooController : ControllerBase
             return StatusCode(500, new { ok = false, message = "Lỗi khi gọi Odoo", details = ex.Message });
         }
     }
+
+    // =====================================================================
+    // GET /api/odoo/getworkorderfromserial?serial=xxx
+    // =====================================================================
+    [HttpGet("getworkorderfromserial")]
+    public async Task<IActionResult> GetWorkOrderFromSerial([FromQuery] string serial)
+    {
+        if (string.IsNullOrWhiteSpace(serial))
+            return BadRequest(new { message = "serial không được rỗng." });
+
+        var (cookie, err) = await RequireCookieAsync();
+        if (err != null) return err;
+
+        // === Step 1: serial → lotId ===
+        var payload1 = new
+        {
+            id = 18,
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                model = "stock.lot",
+                method = "web_search_read",
+                args = Array.Empty<object>(),
+                kwargs = new
+                {
+                    limit = 80,
+                    offset = 0,
+                    order = "",
+                    domain = new object[] { new object[] { "name", "ilike", serial } },
+                    fields = new[] { "name", "product_id" }
+                }
+            }
+        };
+
+        int lotId;
+        try
+        {
+            using var req1 = new HttpRequestMessage(HttpMethod.Post, StockLotUrl)
+            {
+                Content = JsonContent.Create(payload1)
+            };
+            req1.Headers.Add("Cookie", cookie);
+
+            var res1 = await _httpClient.SendAsync(req1);
+            res1.EnsureSuccessStatusCode();
+
+            using var doc1 = await JsonDocument.ParseAsync(await res1.Content.ReadAsStreamAsync());
+
+            if (!doc1.RootElement.TryGetProperty("result", out var r)
+                || !r.TryGetProperty("records", out var records)
+                || records.ValueKind != JsonValueKind.Array
+                || records.GetArrayLength() == 0)
+                return NotFound(new { message = "Không tìm thấy serial trong stock.lot." });
+
+            lotId = records[0].GetProperty("id").GetInt32();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gọi stock.lot");
+            return StatusCode(500, new { message = "Lỗi khi gọi stock.lot/web_search_read", details = ex.Message });
+        }
+
+        // === Step 2: lotId → workOrder (traceability) ===
+        var payload2 = new
+        {
+            id = 23,
+            jsonrpc = "2.0",
+            method = "call",
+            @params = new
+            {
+                args = new object[]
+                {
+                new
+                {
+                    lang = "vi_VN",
+                    tz = "Asia/Ho_Chi_Minh",
+                    uid = 2,
+                    allowed_company_ids = new[] { 1 },
+                    active_id = lotId,
+                    model = "stock.lot",
+                    ttype = (object?)null,
+                    auto_unfold = false,
+                    lot_name = (object?)null
+                }
+                },
+                model = "stock.traceability.report",
+                method = "get_html",
+                kwargs = new
+                {
+                    context = new
+                    {
+                        lang = "vi_VN",
+                        tz = "Asia/Ho_Chi_Minh",
+                        uid = 2,
+                        allowed_company_ids = new[] { 1 }
+                    }
+                }
+            }
+        };
+
+        try
+        {
+            using var req2 = new HttpRequestMessage(HttpMethod.Post, StockTraceabilityUrl)
+            {
+                Content = JsonContent.Create(payload2)
+            };
+            req2.Headers.Add("Cookie", cookie);
+
+            var res2 = await _httpClient.SendAsync(req2);
+            res2.EnsureSuccessStatusCode();
+
+            using var doc2 = await JsonDocument.ParseAsync(await res2.Content.ReadAsStreamAsync());
+            var html = doc2.RootElement
+                .GetProperty("result")
+                .GetProperty("html")
+                .GetString() ?? "";
+
+            var match = Regex.Match(html,
+                @"data-active-id=""(\d+)""[^>]*?>\s*(NM/MO/\d+(?:-\d+)?)\s*<",
+                RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return NotFound(new { message = "Không tìm thấy Work Order trong traceability report." });
+
+            var woPageId = int.Parse(match.Groups[1].Value);
+            var workOrder = match.Groups[2].Value;
+            var baseWorkOrder = Regex.Replace(workOrder, @"-\d+$", "");
+
+            return Ok(new { serial, workOrder = baseWorkOrder, woPageId, serialPageId = lotId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gọi stock.traceability.report");
+            return StatusCode(500, new { message = "Lỗi khi gọi stock.traceability.report/get_html", details = ex.Message });
+        }
+    }
+
 
     // =====================================================================
     // GET /api/odoo/getmessagefromserial?serial=xxx&hashTag=@FQC
@@ -439,7 +574,7 @@ public class OdooController : ControllerBase
             if (!match.Success)
                 return NotFound(new { message = "Không tìm thấy Work Order trong traceability report." });
 
-            woPageId = int.Parse(match.Groups[1].Value);
+            woPageId  = int.Parse(match.Groups[1].Value);
             workOrder = match.Groups[2].Value;
         }
         catch (Exception ex)
@@ -517,7 +652,7 @@ public class OdooController : ControllerBase
         }
     }
 
-    // ── Request model ─────────────────────────────────────────────────────
+    // ── Request model ────────────────────────────────────────────────────
     public class OdooCommentRequest
     {
         public int? ThreadId { get; set; }
