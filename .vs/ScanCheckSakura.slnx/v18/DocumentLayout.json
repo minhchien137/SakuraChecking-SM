@@ -40,7 +40,7 @@
               "RelativeDocumentMoniker": "Controllers\\OdooController.cs",
               "ToolTip": "C:\\ScanCheckSakura\\Controllers\\OdooController.cs",
               "RelativeToolTip": "Controllers\\OdooController.cs",
-              "ViewState": "AgIAACoBAAAAAAAAAADwvzwBAAA3AAAAAAAAAA==",
+              "ViewState": "AgIAADUBAAAAAAAAAAAowDwBAAA3AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-02T02:19:15.938Z",
               "EditorCaption": ""
@@ -55,8 +55,7 @@
               "RelativeToolTip": "Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-25T03:29:13.201Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-25T03:29:13.201Z"
             },
             {
               "$type": "Document",
@@ -68,8 +67,7 @@
               "RelativeToolTip": "Views\\FQC\\FQCBP.cshtml",
               "ViewState": "AgIAABcBAAAAAAAAAAAAACIBAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-03-25T03:29:08.569Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-25T03:29:08.569Z"
             }
           ]
         }

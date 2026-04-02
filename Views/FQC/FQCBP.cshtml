@@ -13,195 +13,125 @@
         --border:        #2d3748;
         --accent:        #3b82f6;
         --pass-color:    #22c55e;
-        --pass-bg:       rgba(34,197,94,0.12);
         --ng-color:      #ef4444;
-        --ng-bg:         rgba(239,68,68,0.12);
         --radius:        10px;
     }
 
     body { background: var(--bg-primary); color: var(--text-primary); }
 
     .fqc-wrap {
-        max-width: 960px;
-        margin: 0 auto;
+        max-width: 960px; margin: 0 auto;
         padding: 2.5rem 2rem 4rem;
         font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
 
-    /* ── Header ─────────────────────────────────────────── */
     .fqc-header {
-        text-align: center;
-        margin-bottom: 2.5rem;
-        padding-bottom: 1.75rem;
-        border-bottom: 1px solid var(--border);
-        position: relative;
+        text-align: center; margin-bottom: 2.5rem;
+        padding-bottom: 1.75rem; border-bottom: 1px solid var(--border);
     }
-
     .fqc-header h1 { font-size: 2rem; font-weight: 600; margin: 0 0 0.5rem; }
 
     .btn-history {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        margin-top: 0.75rem;
-        padding: 7px 16px;
-        font-size: 0.82rem;
-        font-weight: 500;
-        background: var(--bg-tertiary);
-        color: var(--text-secondary);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        margin-top: 0.75rem; padding: 7px 16px;
+        font-size: 0.82rem; font-weight: 500;
+        background: var(--bg-tertiary); color: var(--text-secondary);
+        border: 1px solid var(--border); border-radius: var(--radius);
         text-decoration: none;
         transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
     .btn-history:hover {
-        color: var(--text-primary);
-        border-color: var(--accent);
+        color: var(--text-primary); border-color: var(--accent);
         background: rgba(59,130,246,0.08);
     }
 
-    /* ── 2 cột chính ────────────────────────────────────── */
     .fqc-body {
-        display: grid;
-        grid-template-columns: 1fr 1px 1fr;
-        gap: 0 3rem;
-        align-items: start;
+        display: grid; grid-template-columns: 1fr 1px 1fr;
+        gap: 0 3rem; align-items: start;
     }
-
     @@media (max-width: 768px) {
         .fqc-body { grid-template-columns: 1fr; gap: 2.5rem 0; }
         .fqc-divider { display: none; }
     }
-
     .fqc-divider { width: 1px; align-self: stretch; background: var(--border); }
 
-    /* ══════════════════════════════════════════════════════
-       LEFT PANEL
-    ══════════════════════════════════════════════════════ */
     .left-panel { display: flex; flex-direction: column; gap: 1.5rem; }
-
     .field-group { display: flex; flex-direction: column; gap: 0.45rem; }
-
     .field-group label {
         font-size: 0.82rem; font-weight: 600;
         letter-spacing: 0.07em; text-transform: uppercase;
         color: var(--text-secondary);
     }
-
     .field-group input {
         padding: 13px 15px; font-size: 1.15rem;
         font-family: 'Courier New', monospace;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        color: var(--text-primary);
+        background: var(--bg-tertiary); border: 1px solid var(--border);
+        border-radius: var(--radius); color: var(--text-primary);
         outline: none; width: 100%;
         transition: border-color 0.2s, box-shadow 0.2s;
     }
-
     .field-group input:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 3px rgba(59,130,246,0.18);
         background: var(--bg-secondary);
     }
-
-    /* WO readonly */
     .field-group input[readonly] {
-        cursor: not-allowed;
-        color: var(--text-secondary);
-        background: var(--bg-primary);
-        border-style: dashed;
+        cursor: not-allowed; color: var(--text-secondary);
+        background: var(--bg-primary); border-style: dashed;
     }
     .field-group input[readonly]:focus {
-        border-color: var(--border);
-        box-shadow: none;
-        background: var(--bg-primary);
+        border-color: var(--border); box-shadow: none; background: var(--bg-primary);
     }
 
-    /* WO loading */
     .wo-loading-wrap {
         display: flex; align-items: center; gap: 0.5rem;
-        font-size: 0.78rem; color: var(--text-tertiary);
-        min-height: 1.2rem;
+        font-size: 0.78rem; color: var(--text-tertiary); min-height: 1.2rem;
     }
     .wo-spinner {
-        display: none;
-        width: 12px; height: 12px;
-        border: 2px solid var(--border);
-        border-top-color: var(--accent);
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-        flex-shrink: 0;
+        display: none; width: 12px; height: 12px;
+        border: 2px solid var(--border); border-top-color: var(--accent);
+        border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0;
     }
     .wo-spinner.visible { display: inline-block; }
     .wo-status-text { font-size: 0.78rem; }
     .wo-status-text.found    { color: var(--pass-color); }
     .wo-status-text.notfound { color: var(--ng-color); }
 
-    /* Status input — highlight màu theo giá trị */
     #StatusInput.is-pass {
         border-color: var(--pass-color);
-        box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
-        color: var(--pass-color);
+        box-shadow: 0 0 0 3px rgba(34,197,94,0.18); color: var(--pass-color);
     }
     #StatusInput.is-ng {
         border-color: var(--ng-color);
-        box-shadow: 0 0 0 3px rgba(239,68,68,0.18);
-        color: var(--ng-color);
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.18); color: var(--ng-color);
     }
 
     .field-separator { height: 1px; background: var(--border); margin: 0.25rem 0; }
 
-    /* ── Keyboard hint ───────────────────────────────────── */
     .keyboard-hint {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-top: 0.25rem;
-        font-size: 0.75rem;
-        color: var(--text-tertiary);
+        display: flex; align-items: center; gap: 1rem;
+        margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-tertiary);
     }
-
-    .keyboard-hint .hint-item {
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-    }
-
+    .keyboard-hint .hint-item { display: flex; align-items: center; gap: 0.35rem; }
     kbd.key {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 22px;
-        height: 22px;
-        padding: 0 5px;
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border);
-        border-bottom: 2px solid var(--border);
-        border-radius: 4px;
-        font-size: 0.72rem;
-        font-family: system-ui, sans-serif;
-        font-weight: 600;
-        color: var(--text-secondary);
-        line-height: 1;
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 22px; height: 22px; padding: 0 5px;
+        background: var(--bg-tertiary); border: 1px solid var(--border);
+        border-bottom: 2px solid var(--border); border-radius: 4px;
+        font-size: 0.72rem; font-family: system-ui, sans-serif;
+        font-weight: 600; color: var(--text-secondary); line-height: 1;
     }
 
-    /* ══════════════════════════════════════════════════════
-       RIGHT PANEL
-    ══════════════════════════════════════════════════════ */
     .right-panel {
         display: flex; flex-direction: column;
         align-items: center; gap: 1.5rem; padding-top: 0.5rem;
     }
-
     .wo-display { text-align: center; width: 100%; }
-
     .wo-display__label {
         font-size: 0.72rem; font-weight: 600;
         letter-spacing: 0.1em; text-transform: uppercase;
         color: var(--text-tertiary); margin-bottom: 0.4rem;
     }
-
     .wo-display__value {
         font-size: 1.4rem; font-weight: 700;
         font-family: 'Courier New', monospace;
@@ -209,142 +139,87 @@
     }
     .wo-display__value.empty { color: var(--text-tertiary); font-size: 1rem; font-weight: 400; }
 
-    /* Color loading spinner */
     .color-loading {
-        display: none;
-        width: 14px; height: 14px;
-        border: 2px solid var(--border);
-        border-top-color: var(--accent);
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-        margin: 0 auto;
+        display: none; width: 14px; height: 14px;
+        border: 2px solid var(--border); border-top-color: var(--accent);
+        border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto;
     }
     .color-loading.visible { display: inline-block; }
     @@keyframes spin { to { transform: rotate(360deg); } }
 
     .qty-card {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 1rem 1.5rem;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+        background: var(--bg-secondary); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1rem 1.5rem;
+        width: 100%; display: flex; align-items: center; gap: 1rem;
     }
-
     .qty-main {
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        flex: 1;
-        border-right: 1px solid var(--border);
-        padding-right: 1rem;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        flex: 1; border-right: 1px solid var(--border); padding-right: 1rem;
     }
-
     .qty-card__label {
-        font-size: 0.72rem; font-weight: 600;
-        letter-spacing: 0.1em; text-transform: uppercase;
+        font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
         color: var(--text-tertiary); margin-bottom: 0.3rem;
     }
-
     .qty-card__value {
         font-size: 2.8rem; font-weight: 700; line-height: 1;
-        color: var(--accent); font-family: 'Courier New', monospace;
-        transition: transform 0.2s;
+        color: var(--accent); font-family: 'Courier New', monospace; transition: transform 0.2s;
     }
     .qty-card__value.bump { transform: scale(1.2); }
-
-    .qty-detail {
-        display: flex; flex-direction: column;
-        gap: 0.5rem; flex: 1;
-        padding-left: 0.5rem;
-    }
-
-    .qty-detail__row {
-        display: flex; align-items: center;
-        justify-content: space-between; gap: 0.5rem;
-    }
-
-    .qty-detail__label {
-        font-size: 0.75rem; font-weight: 600;
-        letter-spacing: 0.05em;
-    }
+    .qty-detail { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; padding-left: 0.5rem; }
+    .qty-detail__row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .qty-detail__label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; }
     .qty-detail__label.pass { color: var(--pass-color); }
     .qty-detail__label.ng   { color: var(--ng-color); }
-
-    .qty-detail__val {
-        font-size: 1.2rem; font-weight: 700;
-        font-family: 'Courier New', monospace;
-        min-width: 2rem; text-align: right;
-    }
+    .qty-detail__val { font-size: 1.2rem; font-weight: 700; font-family: 'Courier New', monospace; min-width: 2rem; text-align: right; }
     .qty-detail__val.pass { color: var(--pass-color); }
     .qty-detail__val.ng   { color: var(--ng-color); }
 
-    /* Circle */
     .circle-wrap  { position: relative; width: 180px; height: 180px; }
     .circle-bg    { fill: none; stroke: var(--border); stroke-width: 8; }
-
     .circle-ring {
         fill: none; stroke-width: 8; stroke-linecap: round;
         transform-origin: 50% 50%; transform: rotate(-90deg);
-        stroke-dasharray: 503;
-        stroke-dashoffset: 503;
-        stroke: var(--border);
+        stroke-dasharray: 503; stroke-dashoffset: 503; stroke: var(--border);
         transition: stroke-dashoffset 0.3s ease, stroke 0.2s ease;
     }
     .circle-ring.pass { stroke: var(--pass-color); stroke-dashoffset: 0; }
     .circle-ring.ng   { stroke: var(--ng-color);   stroke-dashoffset: 0; }
-
     .circle-inner {
         position: absolute; inset: 0;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center; gap: 5px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
     }
-
-    .circle-verdict {
-        font-size: 2.6rem; font-weight: 700; line-height: 1;
-        color: var(--text-tertiary); transition: color 0.1s;
-    }
+    .circle-verdict { font-size: 2.6rem; font-weight: 700; line-height: 1; color: var(--text-tertiary); transition: color 0.1s; }
     .circle-verdict.pass { color: var(--pass-color); }
     .circle-verdict.ng   { color: var(--ng-color); }
-
-    .circle-sub {
-        font-size: 0.9rem; color: var(--text-secondary);
-        text-align: center; transition: color 0.1s;
-    }
+    .circle-sub { font-size: 0.9rem; color: var(--text-secondary); text-align: center; transition: color 0.1s; }
     .circle-sub.pass { color: var(--pass-color); }
     .circle-sub.ng   { color: var(--ng-color); }
 
-    /* ── Toast duplicate SN ──────────────────────────────── */
     @@keyframes toastIn {
         from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
         to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 </style>
 
-<!-- Toast duplicate SN -->
-<div id="toastDuplicate" style="
+<!-- Toast chung — dùng cho cả WO not found và Duplicate SN -->
+<div id="toastAlert" style="
     display:none; position:fixed; top:28px; left:50%;
     transform:translateX(-50%); z-index:9999;
     background:#ffffff; border:1px solid #ef4444;
     border-left:4px solid #ef4444; border-radius:10px;
     padding:14px 20px; min-width:300px; max-width:460px;
     box-shadow:0 8px 32px rgba(0,0,0,0.35);
-    align-items:center; gap:12px;
-    color:#374151;
+    align-items:center; gap:12px; color:#374151;
 ">
-    <span style="font-size:1.3rem;">⚠️</span>
+    <span style="font-size:1.3rem;">&#9888;&#65039;</span>
     <div>
-        <div style="font-weight:700; color:#dc2626; font-size:0.88rem;">
-            序列号重复 Duplicate SN
-        </div>
-        <div id="toastMsg" style="color:#374151; font-size:0.8rem; margin-top:3px;"></div>
+        <div id="toastTitle" style="font-weight:700; color:#dc2626; font-size:0.88rem;"></div>
+        <div id="toastMsg"   style="color:#374151; font-size:0.8rem; margin-top:3px;"></div>
     </div>
 </div>
 
 <div class="fqc-wrap">
 
-    <!-- Header -->
     <div class="fqc-header">
         <h1>FQC</h1>
         <a asp-action="FQCBPH" asp-controller="FQC" class="btn-history">
@@ -352,15 +227,12 @@
         </a>
     </div>
 
-    <!-- Body -->
     <div class="fqc-body">
 
-        <!-- ═══ LEFT ═══ -->
         <div class="left-panel">
 
             @Html.AntiForgeryToken()
 
-            <!-- Work Order — readonly, auto-filled từ serial -->
             <div class="field-group">
                 <label for="WorkOrder">工单 / Work Order</label>
                 <input type="text" id="WorkOrder"
@@ -375,66 +247,48 @@
 
             <div class="field-separator"></div>
 
-            <!-- Serial Number -->
             <div class="field-group">
                 <label for="SerialNumber">序列号 / Serial Number</label>
                 <input type="text" id="SerialNumber"
                        placeholder="请输入序列号 / Scan Serial Number..."
-                       maxlength="15"
-                       style="text-transform:uppercase;"
-                       autocomplete="off" />
+                       maxlength="15" style="text-transform:uppercase;" autocomplete="off" />
                 <span id="snErrorMsg" style="display:none; color:#ef4444; font-size:0.8rem; margin-top:0.25rem;">
                     ⚠ 序列号无效 — 必须为15位字符
                 </span>
             </div>
 
-            <!-- Status -->
             <div class="field-group">
                 <label for="StatusInput">状态 / Status</label>
                 <input type="text" id="StatusInput"
                        placeholder="扫描状态 / Scan PASS or NG..."
-                       maxlength="4"
-                       style="text-transform:uppercase;"
-                       autocomplete="off" />
+                       maxlength="4" style="text-transform:uppercase;" autocomplete="off" />
                 <span id="statusErrorMsg" style="display:none; color:#ef4444; font-size:0.8rem; margin-top:0.25rem;">
                     ⚠ 状态无效 — 必须为 PASS 或 NG
                 </span>
             </div>
 
-            <!-- Keyboard hint -->
             <div class="keyboard-hint">
-                <div class="hint-item">
-                    <kbd class="key">↵</kbd>
-                    <span>Next field</span>
-                </div>
-                <div class="hint-item">
-                    <kbd class="key">Esc</kbd>
-                    <span>Clear &amp; reset</span>
-                </div>
+                <div class="hint-item"><kbd class="key">↵</kbd><span>Next field</span></div>
+                <div class="hint-item"><kbd class="key">Esc</kbd><span>Clear &amp; reset</span></div>
             </div>
 
         </div>
 
-        <!-- Divider -->
         <div class="fqc-divider"></div>
 
-        <!-- ═══ RIGHT ═══ -->
         <div class="right-panel">
 
-            <!-- Work Order display -->
             <div class="wo-display">
                 <div class="wo-display__label">工单 / Work Order</div>
                 <div class="wo-display__value empty" id="woDisplayValue">未输入/Not Entered</div>
             </div>
 
-            <!-- Color display -->
             <div class="wo-display">
                 <div class="wo-display__label">Color</div>
                 <div class="wo-display__value empty" id="colorDisplayValue">—</div>
                 <span class="color-loading" id="colorLoading"></span>
             </div>
 
-            <!-- QTY -->
             <div class="qty-card">
                 <div class="qty-main">
                     <div class="qty-card__label">Qty Inspection</div>
@@ -452,7 +306,6 @@
                 </div>
             </div>
 
-            <!-- Circle -->
             <div class="circle-wrap">
                 <svg width="180" height="180" viewBox="0 0 180 180">
                     <circle class="circle-bg" cx="90" cy="90" r="80" />
@@ -475,7 +328,6 @@
 
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
-    // ── Elements ──────────────────────────────────────────
     const woInput        = document.getElementById('WorkOrder');
     const snInput        = document.getElementById('SerialNumber');
     const statusInput    = document.getElementById('StatusInput');
@@ -493,14 +345,11 @@
     const snErrorMsg     = document.getElementById('snErrorMsg');
     const statusErrorMsg = document.getElementById('statusErrorMsg');
 
-    // ── State ─────────────────────────────────────────────
-    let qty           = 0;
-    let passQty       = 0;
-    let ngQty         = 0;
-    let currentWO     = '';
-    let currentWoPageId = 0;
+    let qty       = 0;
+    let passQty   = 0;
+    let ngQty     = 0;
+    let currentWO = '';
 
-    // Focus vào SN ngay khi load
     snInput.focus();
 
     // ── SN input ──────────────────────────────────────────
@@ -517,31 +366,47 @@
 
             const sn = snInput.value.trim();
 
-            // Step 1: Lookup WO từ serial
+            // Step 1: Luon get WO tu serial
             const wo = await fetchWOFromSerial(sn);
             if (!wo) {
+                // Khong tim thay WO → toast, xoa SN, focus SN
+                showToast('未找到工单 / WO Not Found',
+                    `<b style="font-family:'Courier New',monospace;color:#dc2626">${sn}</b><br>
+                     找不到对应工单，请重新检查。Work Order not found in Odoo.`);
+                snInput.value = '';
+                clearSNError();
                 snInput.focus();
                 return;
             }
 
-            // Step 2: Check duplicate trong WO vừa lấy được
+            // Step 2: Check duplicate
             try {
                 const res = await fetch(`${pathBase}/FQC/checkSN?sn=${encodeURIComponent(sn)}&wo=${encodeURIComponent(wo)}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.isDuplicate) {
-                        showDuplicateToast(sn);
-                        snInput.value = '';
-                        clearSNError();
-                        snInput.focus();
-                        return;
-                    }
+                    showToast('序列号重复 Duplicate SN',
+                        `<b style="font-family:'Courier New',monospace;color:#dc2626">${sn}</b><br>
+                        此序列号已检查，请扫描其他。Already scanned, try another.`);
+                    snInput.value = '';
+                    clearSNError();
+                    snInput.focus();
+                    // Chờ 2 giây mới ẩn WO để người dùng kịp nhìn
+                    setTimeout(() => {
+                        currentWO     = '';
+                        woInput.value = '';
+                        updateWODisplay(null);
+                        updateColorDisplay(null);
+                        woStatusText.textContent = '';
+                    }, 2000);
+                    return;
+                }
                 }
             } catch {
-                // Lỗi mạng → vẫn cho tiếp
+                // Loi mang → van cho tiep
             }
 
-            // Step 3: Sang Status
+            // Step 3: Hop le → sang Status
             statusInput.value = '';
             clearStatusError();
             statusInput.focus();
@@ -558,26 +423,18 @@
     statusInput.addEventListener('input', function () {
         this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4);
         clearStatusError();
-
         const v = this.value;
         this.classList.toggle('is-pass', v === 'PASS');
         this.classList.toggle('is-ng',   v === 'NG');
-
-        // Auto-submit khi scanner gửi barcode đầy đủ
-        if (v === 'PASS' || v === 'NG') {
-            submitScan(v);
-        }
+        if (v === 'PASS' || v === 'NG') submitScan(v);
     });
 
     statusInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             const v = this.value.trim();
-            if (v === 'PASS' || v === 'NG') {
-                submitScan(v);
-            } else {
-                showStatusError();
-            }
+            if (v === 'PASS' || v === 'NG') submitScan(v);
+            else showStatusError();
         }
         if (e.key === 'Escape') {
             e.preventDefault();
@@ -586,7 +443,6 @@
         }
     });
 
-    // ── Global Esc ────────────────────────────────────────
     document.addEventListener('keydown', function (e) {
         const tag = e.target.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
@@ -597,9 +453,7 @@
         }
     });
 
-    // ══════════════════════════════════════════════════════
-    // API: serial → WO
-    // ══════════════════════════════════════════════════════
+    // ── API: serial → WO ──────────────────────────────────
     async function fetchWOFromSerial(sn) {
         woSpinner.classList.add('visible');
         woStatusText.textContent = '查找工单中… / Looking up WO…';
@@ -608,26 +462,19 @@
         try {
             const res = await fetch(`${pathBase}/api/Odoo/getworkorderfromserial?serial=${encodeURIComponent(sn)}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
             const data = await res.json();
             const wo   = data.workOrder;
-            if (!wo) throw new Error('No workOrder in response');
+            if (!wo) throw new Error('No workOrder');
 
-            currentWO       = wo;
-            currentWoPageId = data.woPageId ?? 0;
-            woInput.value   = wo;
+            currentWO     = wo;
+            woInput.value = wo;
             updateWODisplay(wo);
-
-            // Fetch color & qty song song
             fetchColor(wo);
             fetchQty(wo);
-
             woStatusText.textContent = `✓ ${wo}`;
             woStatusText.className   = 'wo-status-text found';
-
             return wo;
-        } catch (err) {
-            console.error('fetchWOFromSerial error:', err);
+        } catch {
             currentWO     = '';
             woInput.value = '';
             updateWODisplay(null);
@@ -640,9 +487,7 @@
         }
     }
 
-    // ══════════════════════════════════════════════════════
-    // API: fetch Color
-    // ══════════════════════════════════════════════════════
+    // ── API: fetch Color ──────────────────────────────────
     async function fetchColor(wo) {
         colorDisplay.classList.add('empty');
         colorDisplay.innerHTML = '';
@@ -652,17 +497,12 @@
             if (res.ok) {
                 const data = await res.json();
                 updateColorDisplay(data.productColor || null);
-            } else {
-                updateColorDisplay(null);
-            }
-        } catch {
-            updateColorDisplay(null);
-        } finally {
-            colorLoading.classList.remove('visible');
-        }
+            } else updateColorDisplay(null);
+        } catch { updateColorDisplay(null); }
+        finally { colorLoading.classList.remove('visible'); }
     }
 
-    // API: fetch Qty
+    // ── API: fetch Qty ────────────────────────────────────
     async function fetchQty(wo) {
         try {
             const res = await fetch(`${pathBase}/FQC/qty?workOrder=${encodeURIComponent(wo)}`);
@@ -676,35 +516,26 @@
         } catch { }
     }
 
-    // ══════════════════════════════════════════════════════
-    // Scan logic
-    // ══════════════════════════════════════════════════════
+    // ── Scan logic ────────────────────────────────────────
     async function submitScan(verdictStr) {
         const wo = currentWO;
         const sn = snInput.value.trim();
-
         if (!wo) { flashInput(woInput); snInput.focus(); return; }
         if (!sn) { flashInput(snInput); snInput.focus(); return; }
         if (!validateSN()) return;
 
         const isPass = verdictStr === 'PASS';
-
-        // Hiện kết quả ngay (UX nhanh)
         showCircle(isPass ? 'pass' : 'ng');
 
-        // Clear fields → focus về SN
         snInput.value     = '';
         statusInput.value = '';
         statusInput.classList.remove('is-pass', 'is-ng');
         clearStatusError();
         clearSNError();
-
-        // Reset WO — lần quét tiếp sẽ lookup lại từ SN mới
         currentWO     = '';
         woInput.value = '';
-        updateWODisplay(null);
+        // KHÔNG reset woDisplay và colorDisplay → giữ hiển thị WO + Color bên phải
         woStatusText.textContent = '';
-
         snInput.focus();
 
         try {
@@ -714,26 +545,15 @@
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                 },
-                body: JSON.stringify({
-                    workOrder:    wo,
-                    serialNumber: sn,
-                    status:       verdictStr
-                })
+                body: JSON.stringify({ workOrder: wo, serialNumber: sn, status: verdictStr })
             });
-
             if (res.ok) {
                 const data = await res.json();
                 qty     = data.qty     ?? qty;
                 passQty = data.passQty ?? passQty;
                 ngQty   = data.ngQty   ?? ngQty;
-            } else {
-                qty++; isPass ? passQty++ : ngQty++;
-                console.error('Scan API error:', res.status);
-            }
-        } catch {
-            qty++; isPass ? passQty++ : ngQty++;
-            console.error('Scan API unreachable');
-        }
+            } else { qty++; isPass ? passQty++ : ngQty++; }
+        } catch { qty++; isPass ? passQty++ : ngQty++; }
 
         animateQty();
         setTimeout(resetCircle, 2000);
@@ -753,18 +573,11 @@
     function updateColorDisplay(value) {
         if (value) {
             const colorMap = {
-                'Blue':  '#3b82f6', 'Green': '#22c55e',
-                'Pink':  '#ec4899', 'Red':   '#ef4444',
-                'Black': '#64748b', 'White': '#e2e8f0',
+                'Blue': '#3b82f6', 'Green': '#22c55e', 'Pink': '#ec4899',
+                'Red': '#ef4444', 'Black': '#64748b', 'White': '#e2e8f0',
             };
             const hex = colorMap[value] || '#94a3b8';
-            colorDisplay.innerHTML = `
-                <span style="
-                    display:inline-block; width:12px; height:12px;
-                    border-radius:50%; background:${hex};
-                    box-shadow:0 0 0 2px rgba(255,255,255,0.15);
-                    vertical-align:middle; margin-right:8px; flex-shrink:0;
-                "></span>${value}`;
+            colorDisplay.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hex};box-shadow:0 0 0 2px rgba(255,255,255,0.15);vertical-align:middle;margin-right:8px;flex-shrink:0;"></span>${value}`;
             colorDisplay.style.display        = 'flex';
             colorDisplay.style.alignItems     = 'center';
             colorDisplay.style.justifyContent = 'center';
@@ -816,9 +629,7 @@
     }
 
     function validateSN() {
-        if (snInput.value.trim().length === 15) {
-            clearSNError(); return true;
-        }
+        if (snInput.value.trim().length === 15) { clearSNError(); return true; }
         snInput.style.borderColor = '#ef4444';
         snInput.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.18)';
         snErrorMsg.style.display  = 'block';
@@ -848,26 +659,20 @@
     function flashInput(el) {
         el.style.borderColor = '#ef4444';
         el.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.18)';
-        setTimeout(() => {
-            el.style.borderColor = '';
-            el.style.boxShadow   = '';
-        }, 800);
+        setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 800);
     }
 
-    // ── Toast duplicate SN ────────────────────────────────
+    // ── Toast chung ───────────────────────────────────────
     let _toastTimer = null;
-    function showDuplicateToast(sn) {
-        const toast = document.getElementById('toastDuplicate');
-        document.getElementById('toastMsg').innerHTML =
-            `<b style="color:#dc2626;font-family:'Courier New',monospace">${sn}</b><br>
-             此序列号已检查，请扫描其他。Already scanned, try another.`;
+    function showToast(title, msg) {
+        const toast = document.getElementById('toastAlert');
+        document.getElementById('toastTitle').textContent = title;
+        document.getElementById('toastMsg').innerHTML     = msg;
 
         toast.style.display   = 'flex';
         toast.style.opacity   = '1';
         toast.style.animation = 'none';
-        requestAnimationFrame(() => {
-            toast.style.animation = 'toastIn 0.25s ease';
-        });
+        requestAnimationFrame(() => { toast.style.animation = 'toastIn 0.25s ease'; });
 
         clearTimeout(_toastTimer);
         _toastTimer = setTimeout(() => {
@@ -878,7 +683,7 @@
                 toast.style.transition = '';
                 toast.style.opacity    = '1';
             }, 300);
-        }, 2000);
+        }, 2500);
     }
 
 }());
