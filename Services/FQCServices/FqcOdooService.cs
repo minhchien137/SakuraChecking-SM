@@ -7,7 +7,6 @@ namespace ScanCheckSakura.Services
 {
     public interface IFqcOdooService
     {
-        /// <summary>Lookup WO từ serial → post comment lên thread WO đó.</summary>
         Task PostCommentBySerialAsync(string serial, string commentBody);
     }
 

@@ -79,7 +79,7 @@ public class FQCController : Controller
     [HttpGet]
     public async Task<IActionResult> FQCBPH(FQCBPLogFilter filter)
     {
-        filter.Page     = Math.Max(1, filter.Page);
+        filter.Page = Math.Max(1, filter.Page);
         filter.PageSize = filter.PageSize > 0 ? filter.PageSize : 50;
 
         // Query base
@@ -103,8 +103,8 @@ public class FQCController : Controller
 
         // Counts
         var totalCount = await query.CountAsync();
-        var passCount  = await query.CountAsync(x => x.Status == "PASS");
-        var ngCount    = await query.CountAsync(x => x.Status == "NG");
+        var passCount = await query.CountAsync(x => x.Status == "PASS");
+        var ngCount = await query.CountAsync(x => x.Status == "NG");
         var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
 
         // Paged data — mới nhất trước
@@ -116,13 +116,13 @@ public class FQCController : Controller
 
         var vm = new FQCBPLogViewModel
         {
-            Logs        = logs,
-            Filter      = filter,
-            TotalCount  = totalCount,
-            PassCount   = passCount,
-            NgCount     = ngCount,
+            Logs = logs,
+            Filter = filter,
+            TotalCount = totalCount,
+            PassCount = passCount,
+            NgCount = ngCount,
             CurrentPage = filter.Page,
-            TotalPages  = totalPages
+            TotalPages = totalPages
         };
 
         return View(vm);
@@ -165,7 +165,32 @@ public class FQCController : Controller
         var fileName = $"FQC_History_{DateTime.Now.AddHours(1):yyyyMMdd_HHmmss}.csv";
         return File(bytes, "text/csv", fileName);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> SendOdooComment([FromBody] OdooCommentRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.SerialNumber))
+            return BadRequest(new { message = "SerialNumber is required" });
+        if (string.IsNullOrWhiteSpace(req.CommentBody))
+            return BadRequest(new { message = "CommentBody is required" });
+
+        await _fqcOdooService.PostCommentBySerialAsync(
+            req.SerialNumber.Trim().ToUpper(),
+            req.CommentBody.Trim()
+        );
+
+        return Ok(new { message = "Comment sent" });
+    }
+
+    public class OdooCommentRequest
+    {
+        public string SerialNumber { get; set; } = string.Empty;
+        public string CommentBody { get; set; } = string.Empty;
+    }
+
 }
+
+
 
 public class ScanRequest
 {
