@@ -1,0 +1,1276 @@
+@{
+    ViewData["Title"] = "FQC Report";
+}
+
+<style>
+    :root {
+        --bg-primary:    #0f1217;
+        --bg-secondary:  #1a1f27;
+        --bg-tertiary:   #242a35;
+        --text-primary:  #e2e8f0;
+        --text-secondary:#94a3b8;
+        --text-tertiary: #64748b;
+        --border:        #2d3748;
+        --accent:        #3b82f6;
+        --pass-color:    #22c55e;
+        --pass-bg:       rgba(34,197,94,0.12);
+        --ng-color:      #ef4444;
+        --ng-bg:         rgba(239,68,68,0.12);
+        --warn-color:    #f59e0b;
+        --purple-color:  #a78bfa;
+        --cyan-color:    #22d3ee;
+        --radius:        10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-primary); color: var(--text-primary); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+
+    /* ── Layout ── */
+    .rpt-wrap { max-width: 1600px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+    @@media (max-width: 768px) { .rpt-wrap { padding: 1rem 0.75rem 4rem; } }
+
+    /* ── Header ── */
+    .rpt-header {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        flex-wrap: wrap; gap: 0.75rem;
+        margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border);
+    }
+    .rpt-header__left h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.2rem; }
+    @@media (max-width: 480px) { .rpt-header__left h1 { font-size: 1.15rem; } }
+    .rpt-header__left p  { font-size: 0.82rem; color: var(--text-secondary); }
+    .rpt-header__right { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+
+    .btn-back { display: inline-flex; align-items: center; gap: 0.4rem; padding: 7px 13px; font-size: 0.82rem; font-weight: 500; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .btn-back:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+
+    /* ── Export Button ── */
+    .btn-export {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 7px 15px; font-size: 0.82rem; font-weight: 600;
+        background: linear-gradient(135deg, #16a34a, #15803d);
+        color: #fff; border: none; border-radius: var(--radius);
+        cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+        white-space: nowrap;
+    }
+    .btn-export:hover { opacity: 0.88; }
+    .btn-export:active { transform: scale(0.97); }
+    .btn-export:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Filter Panel ── */
+    .filter-panel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .filter-panel h3 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 0.85rem; }
+    .filter-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 0.65rem 0.9rem; align-items: end; }
+    @@media (max-width: 1100px) { .filter-grid { grid-template-columns: 1fr 1fr 1fr; } }
+    @@media (max-width: 640px)  { .filter-grid { grid-template-columns: 1fr 1fr; } }
+    @@media (max-width: 420px)  { .filter-grid { grid-template-columns: 1fr; } }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary); }
+    .filter-group input,
+    .filter-group select {
+        padding: 0 10px; font-size: 0.85rem; font-family: inherit;
+        background: var(--bg-tertiary); border: 1px solid var(--border);
+        border-radius: 7px; color: var(--text-primary); outline: none;
+        transition: border-color 0.2s; width: 100%; height: 34px;
+    }
+    .filter-group input:focus, .filter-group select:focus { border-color: var(--accent); }
+    .filter-group select option { background: var(--bg-tertiary); }
+    .filter-actions { display: flex; gap: 0.4rem; align-items: flex-end; flex-wrap: wrap; }
+    .btn-apply { padding: 0 16px; font-size: 0.85rem; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: 7px; cursor: pointer; transition: background 0.15s; height: 34px; white-space: nowrap; }
+    .btn-apply:hover { background: #2563eb; }
+    .btn-reset { padding: 0 12px; font-size: 0.85rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 7px; height: 34px; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .btn-reset:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+
+    /* ── KPI Strip ── */
+    .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.65rem; margin-bottom: 1.5rem; }
+    @@media (max-width: 900px)  { .kpi-strip { grid-template-columns: repeat(3, 1fr); } }
+    @@media (max-width: 560px)  { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card {
+        background: var(--bg-secondary); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 0.85rem 1rem;
+        display: flex; flex-direction: column; gap: 5px;
+        position: relative; overflow: hidden;
+    }
+    .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--kpi-color, var(--accent)); }
+    .kpi-card__lbl { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); line-height: 1.3; }
+    .kpi-card__val { font-size: 1.85rem; font-weight: 700; line-height: 1; color: var(--kpi-color, var(--accent)); font-family: 'Courier New', monospace; }
+    @@media (max-width: 560px) { .kpi-card__val { font-size: 1.5rem; } }
+    .kpi-card__sub { font-size: 0.7rem; color: var(--text-tertiary); }
+
+    /* ── Chart Grid ── */
+    .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .chart-grid-trend { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .chart-grid-1 { margin-bottom: 1rem; }
+    @@media (max-width: 1200px) { .chart-grid-3 { grid-template-columns: 1fr 1fr; } }
+    @@media (max-width: 900px)  { .chart-grid-2, .chart-grid-3, .chart-grid-trend { grid-template-columns: 1fr; } }
+
+    .chart-card {
+        background: var(--bg-secondary); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1.1rem 1.25rem; position: relative;
+    }
+    .chart-card__header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; gap: 0.75rem; flex-wrap: wrap; }
+    .chart-card__title { font-size: 0.84rem; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
+    .chart-card__sub   { font-size: 0.72rem; color: var(--text-tertiary); margin-top: 2px; line-height: 1.35; }
+    @@media (max-width: 480px) {
+        .chart-card__title { font-size: 0.78rem; }
+        .chart-card__sub { display: none; }
+    }
+    .chart-card__badge { font-size: 0.68rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .badge-ng   { background: var(--ng-bg);   color: var(--ng-color);   border: 1px solid rgba(239,68,68,0.25); }
+    .badge-pass { background: var(--pass-bg); color: var(--pass-color); border: 1px solid rgba(34,197,94,0.25); }
+    .badge-info { background: rgba(59,130,246,0.12); color: var(--accent); border: 1px solid rgba(59,130,246,0.25); }
+
+    .chart-canvas-wrap { position: relative; }
+
+    /* ── Loading overlay ── */
+    .chart-loading {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        background: rgba(15,18,23,0.7); border-radius: var(--radius); z-index: 5;
+        backdrop-filter: blur(2px);
+    }
+    .spinner { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── NG Table inside card ── */
+    .ng-rank-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.25rem; }
+    .ng-rank-table th { padding: 6px 9px; text-align: left; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 1px solid var(--border); }
+    .ng-rank-table td { padding: 7px 9px; border-bottom: 1px solid rgba(45,55,72,0.4); vertical-align: middle; }
+    .ng-rank-table tr:last-child td { border-bottom: none; }
+    .ng-rank-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .rank-bar-wrap { position: relative; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 70px; }
+    .rank-bar-fill { position: absolute; inset: 0; border-radius: 3px; background: var(--ng-color); transition: width 0.5s ease; }
+    .rank-num { font-size: 0.7rem; font-weight: 700; color: var(--text-tertiary); min-width: 18px; }
+    .ng-code-badge { background: var(--ng-bg); color: var(--ng-color); border: 1px solid rgba(239,68,68,0.2); border-radius: 4px; padding: 2px 7px; font-size: 0.72rem; font-weight: 700; font-family: monospace; white-space: nowrap; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 2.5rem; color: var(--text-tertiary); font-size: 0.88rem; }
+
+    /* ── Toggle group ── */
+    .toggle-group { display: flex; gap: 2px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 7px; padding: 2px; flex-shrink: 0; }
+    .toggle-btn { padding: 3px 10px; font-size: 0.72rem; font-weight: 600; background: transparent; color: var(--text-tertiary); border: none; border-radius: 5px; cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .toggle-btn.active { background: var(--accent); color: #fff; }
+
+    /* ── Heatmap (compact) ── */
+    .heatmap-wrap { overflow-x: auto; }
+    .heatmap-compact-grid {
+        display: grid;
+        grid-template-columns: 54px repeat(7, 1fr);
+        gap: 2px;
+        font-size: 0.62rem;
+        min-width: 360px;
+    }
+    .hm-header { text-align: center; color: var(--text-tertiary); font-weight: 700; padding: 3px 0; font-size: 0.65rem; }
+    .hm-row-label { color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; padding-right: 4px; font-size: 0.62rem; }
+    /* Show only every 2 hours to save space */
+    .hm-row-label.skip { opacity: 0; pointer-events: none; }
+    .hm-cell {
+        aspect-ratio: 1.8; border-radius: 3px; display: flex; align-items: center; justify-content: center;
+        font-size: 0.58rem; font-weight: 700; color: rgba(255,255,255,0.75);
+        cursor: default; transition: transform 0.1s;
+    }
+    .hm-cell:hover { transform: scale(1.12); z-index: 2; position: relative; }
+    .heatmap-legend { font-size: 0.67rem; color: #64748b; margin-top: 6px; text-align: right; }
+
+    /* ── NG Detail Table ── */
+    .ng-detail-section { margin-bottom: 1rem; }
+    .section-title { font-size: 0.88rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-title .badge-count { font-size: 0.68rem; font-weight: 600; background: var(--ng-bg); color: var(--ng-color); border: 1px solid rgba(239,68,68,0.25); border-radius: 20px; padding: 2px 9px; }
+
+    .ng-detail-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .ng-detail-table th {
+        position: sticky; top: 0; z-index: 2;
+        padding: 8px 10px; text-align: left; font-size: 0.68rem; font-weight: 700;
+        letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary);
+        background: var(--bg-tertiary); border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .ng-detail-table td { padding: 7px 10px; border-bottom: 1px solid rgba(45,55,72,0.35); vertical-align: middle; }
+    .ng-detail-table tr:last-child td { border-bottom: none; }
+    .ng-detail-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .ng-detail-table .col-wo { font-weight: 600; color: var(--text-primary); font-family: monospace; font-size: 0.78rem; }
+    .ng-detail-table .col-sn { color: var(--cyan-color); font-family: monospace; font-size: 0.75rem; }
+    .ng-detail-table .col-status-ng { color: var(--ng-color); font-weight: 700; font-size: 0.72rem; background: var(--ng-bg); border-radius: 4px; padding: 2px 8px; display: inline-block; }
+    .ng-detail-table .col-code { background: var(--ng-bg); color: var(--ng-color); border: 1px solid rgba(239,68,68,0.2); border-radius: 4px; padding: 2px 7px; font-size: 0.7rem; font-weight: 700; font-family: monospace; }
+    .ng-detail-table .col-reason { color: var(--text-secondary); max-width: 200px; word-break: break-word; }
+    .ng-detail-table .col-time { color: var(--text-tertiary); font-size: 0.75rem; white-space: nowrap; }
+    .ng-detail-table .col-desc { color: var(--text-tertiary); font-size: 0.75rem; max-width: 220px; word-break: break-word; }
+
+    /* WO group header row */
+    .ng-detail-table .wo-group-header td {
+        background: rgba(59,130,246,0.07); border-top: 2px solid rgba(59,130,246,0.2);
+        font-weight: 700; color: var(--accent); font-size: 0.78rem; padding: 9px 10px;
+        letter-spacing: 0.04em;
+    }
+    .wo-group-header .wo-group-label { display: flex; align-items: center; gap: 0.5rem; }
+    .wo-group-ng-badge { background: var(--ng-bg); color: var(--ng-color); border: 1px solid rgba(239,68,68,0.2); border-radius: 4px; padding: 1px 8px; font-size: 0.7rem; font-weight: 700; }
+    .wo-group-pass-badge { background: var(--pass-bg); color: var(--pass-color); border: 1px solid rgba(34,197,94,0.2); border-radius: 4px; padding: 1px 8px; font-size: 0.7rem; font-weight: 700; }
+
+    .table-scroll-wrap { overflow-x: auto; max-height: 520px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); }
+
+    /* Pagination */
+    .pagination-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; gap: 0.5rem; flex-wrap: wrap; }
+    .pagination-info { font-size: 0.75rem; color: var(--text-tertiary); }
+    .pagination-btns { display: flex; gap: 4px; }
+    .pg-btn { padding: 4px 10px; font-size: 0.78rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .pg-btn:hover:not(:disabled) { color: var(--text-primary); border-color: var(--text-tertiary); }
+    .pg-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+    /* ── Mobile tweaks ── */
+    @@media (max-width: 640px) {
+        .filter-actions { width: 100%; }
+        .btn-apply, .btn-reset { flex: 1; text-align: center; justify-content: center; }
+        .toggle-group { width: 100%; }
+        .toggle-btn { flex: 1; text-align: center; }
+    }
+    /* hide some table cols on mobile */
+    @@media (max-width: 600px) {
+        .ng-detail-table .hide-mobile { display: none; }
+        .ng-detail-table td, .ng-detail-table th { padding: 6px 7px; font-size: 0.73rem; }
+    }
+</style>
+
+<div class="rpt-wrap">
+
+    <!-- ══════════════ HEADER ══════════════ -->
+    <div class="rpt-header">
+        <div class="rpt-header__left">
+            <h1>📊 FQC Report</h1>
+            <p>FQC 质量报告（最终质量控制） / FQC Quality Report</p>
+        </div>
+        <div class="rpt-header__right">
+            <button class="btn-export" id="btnExport" onclick="exportToExcel()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Xuất Excel
+            </button>
+            <a href="/FQC/FQCBP" class="btn-back">← Scan</a>
+            <a href="/FQC/FQCBPH" class="btn-back">📋 History</a>
+        </div>
+    </div>
+
+    <!-- ══════════════ FILTER ══════════════ -->
+    <div class="filter-panel">
+        <h3>🔍 筛选 / Filter</h3>
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label>Work Order</label>
+                <input type="text" id="f_wo" placeholder="e.g. NM/MO/001" />
+            </div>
+            <div class="filter-group">
+                <label>From / 开始日期</label>
+                <input type="date" id="f_from" />
+            </div>
+            <div class="filter-group">
+                <label>To / 结束日期</label>
+                <input type="date" id="f_to" />
+            </div>
+            <div class="filter-group">
+                <label>NG Code / 不良代码</label>
+                <input type="text" id="f_ngcode" placeholder="Filter by NG code" />
+            </div>
+            <div class="filter-actions">
+                <button class="btn-apply" onclick="loadAll()">▶ Apply</button>
+                <button class="btn-reset" onclick="resetFilter()">↺ Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ KPI STRIP ══════════════ -->
+    <div class="kpi-strip">
+        <div class="kpi-card" style="--kpi-color: var(--accent)">
+            <div class="kpi-card__lbl">Total Scanned / 总扫描</div>
+            <div class="kpi-card__val" id="kpi-total">–</div>
+            <div class="kpi-card__sub">Total scans</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color: var(--pass-color)">
+            <div class="kpi-card__lbl">Pass / 合格</div>
+            <div class="kpi-card__val" id="kpi-pass">–</div>
+            <div class="kpi-card__sub" id="kpi-pass-rate">Pass rate: –%</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color: var(--ng-color)">
+            <div class="kpi-card__lbl">NG / 不良</div>
+            <div class="kpi-card__val" id="kpi-ng">–</div>
+            <div class="kpi-card__sub" id="kpi-ng-rate">NG rate: –%</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color: var(--warn-color)">
+            <div class="kpi-card__lbl">Work Orders / 工单</div>
+            <div class="kpi-card__val" id="kpi-wo">–</div>
+            <div class="kpi-card__sub">Unique WOs</div>
+        </div>
+        <div class="kpi-card" style="--kpi-color: var(--purple-color)">
+            <div class="kpi-card__lbl">NG Codes / 不良代码</div>
+            <div class="kpi-card__val" id="kpi-ngcode">–</div>
+            <div class="kpi-card__sub">Unique NG types</div>
+        </div>
+    </div>
+
+    <!-- ══════════════ ROW 1: Trend + Donut ══════════════ -->
+        <div class="chart-grid-trend">
+        <div class="chart-card">
+            <div class="chart-card__header">
+                <div>
+                    <div class="chart-card__title">📈 每日 NG / PASS 趋势 (Daily Trend)</div>
+                    <div class="chart-card__sub">每日 NG / PASS 数量变化 / Daily NG / PASS over time</div>
+                </div>
+                <div class="toggle-group" id="trendToggle">
+                    <button class="toggle-btn active" onclick="setTrendMode('all', this)">All WO</button>
+                    <button class="toggle-btn" onclick="setTrendMode('wo', this)">By WO</button>
+                </div>
+            </div>
+            <div class="chart-canvas-wrap" style="height:250px;">
+                <canvas id="chartTrend"></canvas>
+                <div class="chart-loading" id="loadingTrend"><div class="spinner"></div></div>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-card__header">
+                <div>
+                    <div class="chart-card__title">🍩 合格率 / PASS / NG Ratio</div>
+                    <div class="chart-card__sub">整体合格率 / Overall pass rate</div>
+                </div>
+                <span class="chart-card__badge badge-info" id="badgePassRate">–%</span>
+            </div>
+            <div class="chart-canvas-wrap" style="height:250px; display:flex; align-items:center; justify-content:center;">
+                <canvas id="chartDonut" style="max-width:210px; max-height:210px;"></canvas>
+                <div class="chart-loading" id="loadingDonut"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ ROW 2: NG per WO Bar + NG Code Pareto ══════════════ -->
+    <div class="chart-grid-2">
+    <div class="chart-card">
+        <div class="chart-card__header">
+            <div>
+                <div class="chart-card__title">📦 按工单的合格 / 不良数量 / PASS / NG by Work Order</div>
+                <div class="chart-card__sub">不良最多的工单 / Top WOs with highest NG</div>
+            </div>
+            <span class="chart-card__badge badge-ng" id="badgeTopWO">前10 / Top 10</span>
+        </div>
+        <div class="chart-canvas-wrap" style="height:270px;">
+            <canvas id="chartWoBar"></canvas>
+            <div class="chart-loading" id="loadingWoBar"><div class="spinner"></div></div>
+        </div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-card__header">
+            <div>
+                <div class="chart-card__title">🔴 不良代码分析（帕累托） / NG Code Analysis (Pareto)</div>
+                <div class="chart-card__sub">数量 + 累计百分比（按不良代码） / Count + cumulative % by NG code</div>
+            </div>
+            <span class="chart-card__badge badge-ng" id="badgePareto">–</span>
+        </div>
+        <div class="chart-canvas-wrap" style="height:270px;">
+            <canvas id="chartPareto"></canvas>
+            <div class="chart-loading" id="loadingPareto"><div class="spinner"></div></div>
+        </div>
+    </div>
+</div>
+
+
+ <!-- ══════════════ ROW 3: NG per WO Trend ══════════════ -->
+    <div class="chart-grid-1">
+        <div class="chart-card">
+            <div class="chart-card__header">
+                <div>
+                    <div class="chart-card__title">📉 各工单不良趋势（前5个工单） / NG Trend by Work Order (Top 5 WO)</div>
+                    <div class="chart-card__sub">每个工单每日不良数量 – 多折线对比 / Daily NG count per WO – multi-line comparison</div>
+                </div>
+                <span class="chart-card__badge badge-ng" id="badgeWoTrend">前5 / Top 5</span>
+            </div>
+            <div class="chart-canvas-wrap" style="height:280px;">
+                <canvas id="chartWoTrend"></canvas>
+                <div class="chart-loading" id="loadingWoTrend"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+        <!-- ══════════════ ROW 4: NG Code Breakdown + Ranking ══════════════ -->
+        <div class="chart-grid-2">
+            <div class="chart-card">
+                <div class="chart-card__header">
+                    <div>
+                        <div class="chart-card__title">🧱 各工单不良代码分布 / NG Code breakdown by Work Order</div>
+                        <div class="chart-card__sub">堆叠图 – 每个工单的缺陷分布 / Stacked – defect distribution per WO</div>
+                    </div>
+                    <span class="chart-card__badge badge-ng">堆叠 / Stacked</span>
+                </div>
+                <div class="chart-canvas-wrap" style="height:280px;">
+                    <canvas id="chartStacked"></canvas>
+                    <div class="chart-loading" id="loadingStacked"><div class="spinner"></div></div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card__header">
+                    <div>
+                        <div class="chart-card__title">🏆 不良代码排行榜 / NG Code Ranking</div>
+                        <div class="chart-card__sub">不良原因排行（带进度条） / NG reason ranking with progress bar</div>
+                    </div>
+                    <span class="chart-card__badge badge-ng" id="badgeNgTable">–</span>
+                </div>
+                <div id="ngRankWrap" style="max-height:280px; overflow-y:auto;">
+                    <div class="chart-loading" id="loadingNgTable" style="position:static; height:80px;"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ══════════════ ROW 5: Heatmap (compact) ══════════════ -->
+        <div class="chart-grid-1">
+            <div class="chart-card">
+                <div class="chart-card__header">
+                    <div>
+                        <div class="chart-card__title">🌡️ 按小时 × 星期的不良热力图 / NG Heatmap by Hour × Day</div>
+                        <div class="chart-card__sub">一天中的小时 vs 一周中的天 – 查找不良较高的班次 / Hour of day vs Day of week – identify high NG shifts</div>
+                    </div>
+                    <span class="chart-card__badge badge-info">热力图 / Heatmap</span>
+                </div>
+                <div class="heatmap-wrap" id="heatmapWrap">
+                    <div class="chart-loading" id="loadingHeatmap" style="position:static; height:80px;"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ ROW 6: NG Detail by Work Order ══════════════ -->
+        <div class="chart-grid-1 ng-detail-section">
+            <div class="chart-card">
+                <div class="chart-card__header">
+                    <div>
+                        <div class="chart-card__title">📋 按工单不良明细 / NG Detail by Work Order</div>
+                        <div class="chart-card__sub">不良明细（按工单分组） / NG Details grouped by Work Order</div>
+                    </div>
+                    <span class="chart-card__badge badge-ng" id="badgeNgDetail">–</span>
+                </div>
+
+                <!-- Search inside table -->
+                <div style="margin-bottom:0.6rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                    <input type="text" id="detailSearch" placeholder="🔍 搜索工单 / SN / 代码... / Search WO / SN / Code..." 
+                        style="flex:1; min-width:180px; padding:0 10px; height:32px; font-size:0.82rem; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:7px; color:var(--text-primary); outline:none; font-family:inherit;"
+                        oninput="filterDetailTable()" />
+                    <select id="detailWoFilter" onchange="filterDetailTable()"
+                        style="height:32px; padding:0 8px; font-size:0.82rem; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:7px; color:var(--text-primary); font-family:inherit; outline:none;">
+                        <option value="">全部工单 / All WO</option>
+                    </select>
+                    <span style="font-size:0.75rem; color:var(--text-tertiary);" id="detailCountInfo"></span>
+                </div>
+
+                <div class="table-scroll-wrap" id="ngDetailTableWrap">
+                    <div class="chart-loading" id="loadingNgDetail" style="position:static; height:80px;"><div class="spinner"></div></div>
+                </div>
+                <div class="pagination-bar" id="detailPagination" style="display:none;"></div>
+            </div>
+        </div>
+        </div>
+
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    // ═══════════════════════════════════════════════
+    // CONFIG & STATE
+    // ═══════════════════════════════════════════════
+    const pathBase = document.querySelector('base')?.href?.replace(/\/$/, '') || '';
+
+    const PALETTE = {
+        ng:'#ef4444', pass:'#22c55e', accent:'#3b82f6',
+        warn:'#f59e0b', purple:'#a78bfa', cyan:'#22d3ee',
+    };
+    const MULTI_COLORS = [
+        '#ef4444','#f59e0b','#a78bfa','#22d3ee','#f472b6',
+        '#fb923c','#84cc16','#2dd4bf','#60a5fa','#e879f9'
+    ];
+    const gridColor = 'rgba(45,55,72,0.6)';
+
+    Chart.defaults.color                            = '#64748b';
+    Chart.defaults.font.family                      = "system-ui,-apple-system,'Segoe UI',sans-serif";
+    Chart.defaults.plugins.legend.labels.color      = '#94a3b8';
+    Chart.defaults.plugins.tooltip.backgroundColor  = '#1a1f27';
+    Chart.defaults.plugins.tooltip.borderColor      = '#2d3748';
+    Chart.defaults.plugins.tooltip.borderWidth      = 1;
+    Chart.defaults.plugins.tooltip.titleColor       = '#e2e8f0';
+    Chart.defaults.plugins.tooltip.bodyColor        = '#94a3b8';
+    Chart.defaults.plugins.tooltip.padding          = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius     = 8;
+
+    Chart.register(ChartDataLabels);
+    Chart.defaults.plugins.datalabels.display = false;
+
+    let charts = {}, rawData = null, trendMode = 'all';
+
+    // Detail table state
+    let allDetailRows = [];
+    let filteredDetailRows = [];
+    const PAGE_SIZE = 50;
+    let currentPage = 1;
+
+    // ═══════════════════════════════════════════════
+    // FILTER
+    // ═══════════════════════════════════════════════
+    function getFilter() {
+        return {
+            wo:     document.getElementById('f_wo').value.trim().toUpperCase(),
+            from:   document.getElementById('f_from').value,
+            to:     document.getElementById('f_to').value,
+            ngcode: document.getElementById('f_ngcode').value.trim().toUpperCase(),
+        };
+    }
+    function buildQuery(f) {
+        const p = new URLSearchParams();
+        if (f.wo)     p.set('workOrder', f.wo);
+        if (f.from)   p.set('dateFrom',  f.from);
+        if (f.to)     p.set('dateTo',    f.to);
+        if (f.ngcode) p.set('ngCode',    f.ngcode);
+        return p.toString();
+    }
+    function resetFilter() {
+        ['f_wo','f_from','f_to','f_ngcode'].forEach(id => document.getElementById(id).value = '');
+        setDefaultDates();
+        loadAll();
+    }
+
+    // ═══════════════════════════════════════════════
+    // FETCH
+    // ═══════════════════════════════════════════════
+    async function fetchReportData(f) {
+        const qs  = buildQuery(f);
+        const res = await fetch(`${pathBase}/FQC/reportData${qs ? '?' + qs : ''}`);
+        if (!res.ok) throw new Error('API error ' + res.status);
+        return res.json();
+    }
+
+    // Fetch raw NG detail records
+    async function fetchNgDetail(f) {
+        const qs  = buildQuery(f);
+        const res = await fetch(`${pathBase}/FQC/ngDetailData${qs ? '?' + qs : ''}`);
+        if (!res.ok) throw new Error('API error ' + res.status);
+        return res.json();
+    }
+
+    // ═══════════════════════════════════════════════
+    // LOADING
+    // ═══════════════════════════════════════════════
+    function showLoading(ids) {
+        ids.forEach(id => { const el = document.getElementById('loading'+id); if(el) el.style.display='flex'; });
+    }
+    function hideLoading(ids) {
+        ids.forEach(id => { const el = document.getElementById('loading'+id); if(el) el.style.display='none'; });
+    }
+    function destroyChart(k) { if(charts[k]) { charts[k].destroy(); delete charts[k]; } }
+
+    // ═══════════════════════════════════════════════
+    // MAIN LOAD
+    // ═══════════════════════════════════════════════
+    async function loadAll() {
+        const CHARTS = ['Trend','Donut','WoBar','Pareto','WoTrend','Stacked','NgTable','Heatmap'];
+        showLoading(CHARTS);
+
+        // Reset detail table
+        const detailWrap = document.getElementById('ngDetailTableWrap');
+        if (detailWrap) detailWrap.innerHTML = '<div class="chart-loading" id="loadingNgDetail" style="position:static; height:80px;"><div class="spinner"></div></div>';
+
+        const f = getFilter();
+        try {
+            rawData = await fetchReportData(f);
+        } catch(e) {
+            console.error('reportData fetch error:', e);
+            hideLoading(CHARTS);
+            if (detailWrap) detailWrap.innerHTML = '<div class="empty-state">⚠️ Lỗi tải dữ liệu</div>';
+            return;
+        }
+
+        renderKPI(rawData);
+        renderDonut(rawData);
+        renderTrend(rawData);
+        renderWoBar(rawData);
+        renderPareto(rawData);
+        renderWoTrend(rawData);
+        renderStacked(rawData);
+        renderNgTable(rawData);
+        renderHeatmap(rawData);
+        hideLoading(CHARTS);
+
+        // Render detail table từ ngDetailRows nếu backend trả về, hoặc để trống
+        const detail = rawData.ngDetailRows ?? [];
+        renderNgDetail(detail);
+    }
+
+    // ═══════════════════════════════════════════════
+    // KPI
+    // ═══════════════════════════════════════════════
+    function renderKPI(d) {
+        const total=d.totalScanned??0, pass=d.totalPass??0, ng=d.totalNg??0;
+        document.getElementById('kpi-total').textContent   = total.toLocaleString();
+        document.getElementById('kpi-pass').textContent    = pass.toLocaleString();
+        document.getElementById('kpi-ng').textContent      = ng.toLocaleString();
+        document.getElementById('kpi-wo').textContent      = d.uniqueWo??0;
+        document.getElementById('kpi-ngcode').textContent  = d.uniqueNgCode??0;
+        const pr = total>0?((pass/total)*100).toFixed(1):'0.0';
+        const nr = total>0?((ng/total)*100).toFixed(1):'0.0';
+        document.getElementById('kpi-pass-rate').textContent  = `Pass rate: ${pr}%`;
+        document.getElementById('kpi-ng-rate').textContent    = `NG rate: ${nr}%`;
+        document.getElementById('badgePassRate').textContent  = `${pr}% PASS`;
+    }
+
+    // ═══════════════════════════════════════════════
+    // DONUT
+    // ═══════════════════════════════════════════════
+    function renderDonut(d) {
+        destroyChart('donut');
+        const pass=d.totalPass??0, ng=d.totalNg??0;
+        charts['donut'] = new Chart(document.getElementById('chartDonut'), {
+            type: 'doughnut',
+            data: {
+                labels: ['PASS','NG'],
+                datasets:[{ data:[pass,ng],
+                    backgroundColor:[PALETTE.pass,PALETTE.ng],
+                    borderColor:['rgba(34,197,94,0.3)','rgba(239,68,68,0.3)'],
+                    borderWidth:2, hoverOffset:6 }]
+            },
+            options: {
+                responsive:true, maintainAspectRatio:true, cutout:'68%',
+                plugins: {
+                    legend:{ position:'bottom', labels:{ padding:14, font:{size:12} } },
+                    tooltip:{ callbacks:{ label: ctx => {
+                        const tot=pass+ng;
+                        const pct=tot>0?((ctx.raw/tot)*100).toFixed(1):0;
+                        return ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${pct}%)`;
+                    }}},
+                    datalabels:{
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+                        color:'#fff', font:{ weight:'bold', size:12 },
+                        textAlign:'center',
+                        textShadowBlur:4, textShadowColor:'rgba(0,0,0,0.7)',
+                        formatter:(v,ctx)=>{
+                            const tot=pass+ng;
+                            const pct=tot>0?((v/tot)*100).toFixed(1):0;
+                            return `${ctx.chart.data.labels[ctx.dataIndex]}\n${v.toLocaleString()} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // TREND LINE
+    // ═══════════════════════════════════════════════
+    function renderTrend(d) {
+        destroyChart('trend');
+        if (trendMode === 'wo') { renderTrendByWo(d); return; }
+        const daily = d.dailyTrend ?? [];
+        const labels = daily.map(x=>x.date);
+        const showPassLabel = daily.length <= 20;
+        charts['trend'] = new Chart(document.getElementById('chartTrend'), {
+            type:'line',
+            data:{ labels, datasets:[
+                { label:'NG', data: daily.map(x=>x.ng),
+                  borderColor:PALETTE.ng, backgroundColor:'rgba(239,68,68,0.08)',
+                  borderWidth:2, pointRadius:4, pointHoverRadius:6, fill:true, tension:0.35 },
+                { label:'PASS', data: daily.map(x=>x.pass),
+                  borderColor:PALETTE.pass, backgroundColor:'rgba(34,197,94,0.06)',
+                  borderWidth:2, pointRadius:4, pointHoverRadius:6, fill:true, tension:0.35 },
+            ]},
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                interaction:{ mode:'index', intersect:false },
+                layout:{ padding:{ top:20 } },
+                scales:{
+                    x:{ grid:{color:gridColor}, ticks:{maxRotation:45,font:{size:11}} },
+                    y:{ grid:{color:gridColor}, beginAtZero:true, ticks:{precision:0} }
+                },
+                plugins:{
+                    legend:{ position:'top' },
+                    datalabels:{
+                        display: ctx => {
+                            const v = ctx.dataset.data[ctx.dataIndex];
+                            if (v <= 0) return false;
+                            if (ctx.datasetIndex === 0) return true;
+                            return showPassLabel;
+                        },
+                        align:'top', anchor:'end',
+                        color: ctx => ctx.datasetIndex===0 ? PALETTE.ng : PALETTE.pass,
+                        font:{ weight:'bold', size:10 }, formatter: v => v,
+                    }
+                }
+            }
+        });
+    }
+
+    function renderTrendByWo(d) {
+        const wts = d.ngTrendPerWo ?? {};
+        const sorted = Object.entries(wts)
+            .map(([wo,pts])=>({ wo, pts, total:pts.reduce((s,p)=>s+p.ng,0) }))
+            .sort((a,b)=>b.total-a.total).slice(0,5);
+        const allDates = [...new Set(sorted.flatMap(x=>x.pts.map(p=>p.date)))].sort();
+        const datasets = sorted.map(({wo,pts},i)=>{
+            const map = Object.fromEntries(pts.map(p=>[p.date,p.ng]));
+            return { label:wo, data: allDates.map(dt=>map[dt]??0),
+                borderColor:MULTI_COLORS[i], backgroundColor:MULTI_COLORS[i]+'18',
+                borderWidth:2, pointRadius:4, tension:0.35, fill:false };
+        });
+        charts['trend'] = new Chart(document.getElementById('chartTrend'), {
+            type:'line',
+            data:{ labels:allDates, datasets },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                interaction:{ mode:'index', intersect:false },
+                layout:{ padding:{ top:20 } },
+                scales:{
+                    x:{ grid:{color:gridColor}, ticks:{maxRotation:45,font:{size:11}} },
+                    y:{ grid:{color:gridColor}, beginAtZero:true, ticks:{precision:0} }
+                },
+                plugins:{ legend:{ position:'top' }, datalabels:{ display:false } }
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // WO BAR
+    // ═══════════════════════════════════════════════
+    function renderWoBar(d) {
+        destroyChart('wobar');
+        const wos = (d.ngPerWo??[]).slice(0,10);
+        const labels = wos.map(x=>x.workOrder);
+        charts['wobar'] = new Chart(document.getElementById('chartWoBar'), {
+            type:'bar',
+            data:{ labels, datasets:[
+                { label:'NG', data: wos.map(x=>x.ng),
+                  backgroundColor:'rgba(239,68,68,0.75)', borderColor:PALETTE.ng, borderWidth:1, borderRadius:4 },
+                { label:'PASS', data: wos.map(x=>x.pass),
+                  backgroundColor:'rgba(34,197,94,0.55)', borderColor:PALETTE.pass, borderWidth:1, borderRadius:4 },
+            ]},
+            options:{
+                indexAxis:'y', responsive:true, maintainAspectRatio:false,
+                interaction:{ mode:'index', intersect:false },
+                layout:{ padding:{ right:36 } },
+                scales:{
+                    x:{ grid:{color:gridColor}, beginAtZero:true, ticks:{precision:0} },
+                    y:{ grid:{color:'transparent'}, ticks:{font:{size:11}} },
+                },
+                plugins:{
+                    legend:{ position:'top' },
+                    datalabels:{
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor:'end', align:'end', clamp:true,
+                        color: ctx => ctx.datasetIndex===0 ? PALETTE.ng : PALETTE.pass,
+                        font:{ weight:'bold', size:10 }, formatter: v => v,
+                    }
+                }
+            }
+        });
+        document.getElementById('badgeTopWO').textContent = `Top ${wos.length}`;
+    }
+
+    // ═══════════════════════════════════════════════
+    // PARETO
+    // ═══════════════════════════════════════════════
+    function renderPareto(d) {
+        destroyChart('pareto');
+        const items = (d.ngPerCode??[]).slice(0,15);
+        const total = items.reduce((s,x)=>s+x.count,0);
+        let cum=0;
+        const cumPct = items.map(x=>{ cum+=x.count; return total>0?+((cum/total)*100).toFixed(1):0; });
+        const labels = items.map(x=>x.code||x.reason||'Unknown');
+        charts['pareto'] = new Chart(document.getElementById('chartPareto'), {
+            type:'bar',
+            data:{ labels, datasets:[
+                { type:'bar', label:'NG Count', data: items.map(x=>x.count),
+                  backgroundColor: items.map((_,i)=>`rgba(239,68,68,${0.9-i*0.04})`),
+                  borderRadius:4, yAxisID:'y' },
+                { type:'line', label:'Cumulative %', data: cumPct,
+                  borderColor:PALETTE.warn, borderWidth:2,
+                  pointRadius:4, pointBackgroundColor:PALETTE.warn,
+                  fill:false, tension:0.1, yAxisID:'y2' }
+            ]},
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                interaction:{ mode:'index', intersect:false },
+                layout:{ padding:{ top:22 } },
+                scales:{
+                    x:{ grid:{color:gridColor}, ticks:{maxRotation:45,font:{size:10}} },
+                    y:{ grid:{color:gridColor}, beginAtZero:true, position:'left', ticks:{precision:0} },
+                    y2:{ beginAtZero:true, max:100, position:'right',
+                         grid:{drawOnChartArea:false}, ticks:{callback:v=>v+'%'} },
+                },
+                plugins:{
+                    legend:{ position:'top' },
+                    datalabels:{
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor: ctx => ctx.datasetIndex===0 ? 'end'    : 'center',
+                        align:  ctx => ctx.datasetIndex===0 ? 'end'    : 'right',
+                        color:  ctx => ctx.datasetIndex===0 ? '#e2e8f0': PALETTE.warn,
+                        font:{ weight:'bold', size:10 },
+                        formatter: (v,ctx) => ctx.datasetIndex===1 ? v+'%' : v,
+                        clamp: true,
+                    }
+                }
+            }
+        });
+        document.getElementById('badgePareto').textContent = `${items.length} codes`;
+    }
+
+    // ═══════════════════════════════════════════════
+    // WO TREND (multi-line)
+    // ═══════════════════════════════════════════════
+    function renderWoTrend(d) {
+        destroyChart('wotrend');
+        const wts = d.ngTrendPerWo??{};
+        const sorted = Object.entries(wts)
+            .map(([wo,pts])=>({ wo, pts, total:pts.reduce((s,p)=>s+p.ng,0) }))
+            .sort((a,b)=>b.total-a.total).slice(0,5);
+        const allDates = [...new Set(sorted.flatMap(x=>x.pts.map(p=>p.date)))].sort();
+        const showLabel = allDates.length <= 20;
+        const datasets = sorted.map(({wo,pts},i)=>{
+            const map = Object.fromEntries(pts.map(p=>[p.date,p.ng]));
+            return { label:wo, data: allDates.map(dt=>map[dt]??0),
+                borderColor:MULTI_COLORS[i], backgroundColor:MULTI_COLORS[i]+'18',
+                borderWidth:2, pointRadius:4, tension:0.35, fill:false };
+        });
+        document.getElementById('badgeWoTrend').textContent = `Top ${sorted.length}`;
+        charts['wotrend'] = new Chart(document.getElementById('chartWoTrend'), {
+            type:'line', data:{ labels:allDates, datasets },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                interaction:{ mode:'index', intersect:false },
+                layout:{ padding:{ top:20 } },
+                scales:{
+                    x:{ grid:{color:gridColor}, ticks:{maxRotation:45,font:{size:11}} },
+                    y:{ grid:{color:gridColor}, beginAtZero:true, ticks:{precision:0} }
+                },
+                plugins:{
+                    legend:{ position:'top' },
+                    datalabels:{
+                        display: ctx => showLabel && ctx.dataset.data[ctx.dataIndex] > 0,
+                        align:'top', anchor:'end',
+                        color: ctx => MULTI_COLORS[ctx.datasetIndex%MULTI_COLORS.length],
+                        font:{ weight:'bold', size:9 }, formatter: v => v,
+                    }
+                }
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // STACKED BAR
+    // ═══════════════════════════════════════════════
+    function renderStacked(d) {
+        destroyChart('stacked');
+        const data = d.ngCodePerWo??{};
+        const wos  = Object.keys(data).slice(0,8);
+        const codes = [...new Set(wos.flatMap(wo=>Object.keys(data[wo])))];
+        const datasets = codes.map((code,i)=>({
+            label: code||'Unknown',
+            data:  wos.map(wo=>data[wo][code]??0),
+            backgroundColor: MULTI_COLORS[i%MULTI_COLORS.length]+'cc',
+            borderColor:     MULTI_COLORS[i%MULTI_COLORS.length],
+            borderWidth:1, borderRadius:2,
+        }));
+        charts['stacked'] = new Chart(document.getElementById('chartStacked'), {
+            type:'bar', data:{ labels:wos, datasets },
+            options:{
+                responsive:true, maintainAspectRatio:false,
+                interaction:{ mode:'index', intersect:false },
+                scales:{
+                    x:{ stacked:true, grid:{color:gridColor}, ticks:{maxRotation:45,font:{size:10}} },
+                    y:{ stacked:true, grid:{color:gridColor}, beginAtZero:true, ticks:{precision:0} },
+                },
+                plugins:{
+                    legend:{ position:'right', labels:{font:{size:10},padding:8,boxWidth:12} },
+                    datalabels:{
+                        display: ctx => {
+                            const v = ctx.dataset.data[ctx.dataIndex];
+                            if (v <= 0) return false;
+                            const total = datasets.reduce((s,ds)=>s+(ds.data[ctx.dataIndex]??0),0);
+                            return total>0 && (v/total)>=0.06;
+                        },
+                        anchor:'center', align:'center', color:'#fff',
+                        font:{ weight:'bold', size:9 }, formatter: v => v,
+                        textShadowBlur:3, textShadowColor:'rgba(0,0,0,0.8)',
+                    }
+                }
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    // NG RANK TABLE
+    // ═══════════════════════════════════════════════
+    function renderNgTable(d) {
+        const wrap  = document.getElementById('ngRankWrap');
+        const items = d.ngPerCode??[];
+        const max   = items.length>0 ? items[0].count : 1;
+        document.getElementById('badgeNgTable').textContent = `${items.length} codes`;
+        if(items.length===0){ wrap.innerHTML='<div class="empty-state">No NG data</div>'; return; }
+        const rows = items.map((item,i)=>{
+            const pct = Math.round((item.count/max)*100);
+            return `<tr>
+                <td><span class="rank-num">#${i+1}</span></td>
+                <td><span class="ng-code-badge">${item.code||'—'}</span></td>
+                <td style="max-width:150px;font-size:0.78rem;color:#94a3b8;word-break:break-word">${item.reason||'—'}</td>
+                <td style="font-weight:700;color:#ef4444;font-family:'Courier New',monospace">${item.count}</td>
+                <td style="min-width:80px"><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%"></div></div></td>
+            </tr>`;
+        }).join('');
+        wrap.innerHTML=`<table class="ng-rank-table"><thead><tr><th>#</th><th>Code</th><th>Reason</th><th>Count</th><th>Bar</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    // ═══════════════════════════════════════════════
+    // HEATMAP (COMPACT — show all 24h but smaller cells)
+    // ═══════════════════════════════════════════════
+    function renderHeatmap(d) {
+        const wrap   = document.getElementById('heatmapWrap');
+        const matrix = d.heatmap??{};
+        const DAYS   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const HOURS  = Array.from({length:24},(_,i)=>i);
+        let maxVal=0;
+        for(let h=0;h<24;h++) for(let dw=0;dw<7;dw++) { const v=matrix[h]?.[dw]??0; if(v>maxVal)maxVal=v; }
+        function heatColor(v){
+            if(maxVal===0||v===0) return '#1a1f27';
+            const t=v/maxVal;
+            if(t<0.5){ const t2=t*2; return `rgba(${Math.round(34+(245-34)*t2)},${Math.round(197+(158-197)*t2)},${Math.round(94+(11-94)*t2)},0.85)`; }
+            else { const t2=(t-0.5)*2; return `rgba(${Math.round(245+(239-245)*t2)},${Math.round(158+(68-158)*t2)},${Math.round(11+(44-11)*t2)},0.9)`; }
+        }
+        let html='<div class="heatmap-compact-grid"><div class="hm-header"></div>';
+        DAYS.forEach(dy=>{ html+=`<div class="hm-header">${dy}</div>`; });
+        HOURS.forEach((h)=>{
+            // Show label every 2 hours, but render all rows
+            const hrLabel = h % 2 === 0 ? `${String(h).padStart(2,'0')}h` : '';
+            html+=`<div class="hm-row-label" style="${hrLabel?'':'opacity:0'}">${hrLabel}</div>`;
+            for(let dw=0;dw<7;dw++){
+                const v=matrix[h]?.[dw]??0;
+                // Only show count if value > 0 and cell is large enough (even hours)
+                const showVal = v > 0 && h % 2 === 0 ? v : (v > 0 ? '' : '');
+                html+=`<div class="hm-cell" style="background:${heatColor(v)}" title="${DAYS[dw]} ${String(h).padStart(2,'0')}:00 — ${v} NG">${v>0?v:''}</div>`;
+            }
+        });
+        html+='</div>';
+        html+='<div class="heatmap-legend">🟩 低 / Low &nbsp;&nbsp; 🟨 中 / Medium &nbsp;&nbsp; 🟥 高 / High</div>';
+        wrap.innerHTML=html;
+    }
+
+    // ═══════════════════════════════════════════════
+    // NG DETAIL TABLE (grouped by WO)
+    // ═══════════════════════════════════════════════
+    function renderNgDetail(rows) {
+        allDetailRows = rows ?? [];
+        
+        // Populate WO filter dropdown
+        const woFilter = document.getElementById('detailWoFilter');
+        const uniqueWos = [...new Set(allDetailRows.map(r=>r.workOrder))].sort();
+        woFilter.innerHTML = '<option value="">All WO</option>';
+        uniqueWos.forEach(wo => {
+            const opt = document.createElement('option');
+            opt.value = wo; opt.textContent = wo;
+            woFilter.appendChild(opt);
+        });
+
+        document.getElementById('badgeNgDetail').textContent = `${allDetailRows.length} records`;
+        filterDetailTable();
+    }
+
+    window.filterDetailTable = function() {
+        const search = document.getElementById('detailSearch').value.trim().toLowerCase();
+        const woVal  = document.getElementById('detailWoFilter').value;
+        filteredDetailRows = allDetailRows.filter(r => {
+            const matchWo   = !woVal || r.workOrder === woVal;
+            const matchText = !search || 
+                (r.workOrder||'').toLowerCase().includes(search) ||
+                (r.serialNumber||'').toLowerCase().includes(search) ||
+                (r.ngCode||'').toLowerCase().includes(search) ||
+                (r.ngReason||'').toLowerCase().includes(search);
+            return matchWo && matchText;
+        });
+        currentPage = 1;
+        renderDetailPage();
+    };
+
+    function renderDetailPage() {
+        const wrap = document.getElementById('ngDetailTableWrap');
+        const total = filteredDetailRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        document.getElementById('detailCountInfo').textContent = 
+            `${total.toLocaleString()} records${total !== allDetailRows.length ? ' (filtered)' : ''}`;
+
+        if(total === 0) {
+            wrap.innerHTML = '<div class="empty-state">Không có dữ liệu NG</div>';
+            document.getElementById('detailPagination').style.display = 'none';
+            return;
+        }
+
+        // Group current page rows by WO
+        const pageRows = filteredDetailRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+        const grouped = {};
+        pageRows.forEach(r => {
+            if (!grouped[r.workOrder]) grouped[r.workOrder] = [];
+            grouped[r.workOrder].push(r);
+        });
+
+        // Summary counts from ALL filtered rows (not just this page)
+        const woSummary = {};
+        filteredDetailRows.forEach(r => {
+            if (!woSummary[r.workOrder]) woSummary[r.workOrder] = { ng:0, pass:0 };
+            if ((r.status||'').toUpperCase() === 'NG') woSummary[r.workOrder].ng++;
+            else woSummary[r.workOrder].pass++;
+        });
+
+        let html = `<table class="ng-detail-table">
+            <thead><tr>
+                <th>#</th>
+                <th>Serial Number</th>
+                <th>Status</th>
+                <th>NG Code</th>
+                <th>Reason / 原因</th>
+                <th class="hide-mobile">Description</th>
+                <th>Time / 时间</th>
+            </tr></thead><tbody>`;
+
+        let globalIdx = (currentPage-1)*PAGE_SIZE;
+        Object.entries(grouped).forEach(([wo, rows]) => {
+            const sum = woSummary[wo] || { ng:0, pass:0 };
+            html += `<tr class="wo-group-header">
+                <td colspan="7">
+                    <div class="wo-group-label">
+                        <span>📦 ${wo}</span>
+                        <span class="wo-group-ng-badge">NG: ${sum.ng}</span>
+                        @* <span class="wo-group-pass-badge">PASS: ${sum.pass}</span> *@
+                    </div>
+                </td>
+            </tr>`;
+            rows.forEach(r => {
+                globalIdx++;
+                const isNg = (r.status||'').toUpperCase() === 'NG';
+                const timeStr = r.timeline ? new Date(r.timeline).toLocaleString('vi-VN', {
+                    year:'numeric', month:'2-digit', day:'2-digit',
+                    hour:'2-digit', minute:'2-digit'
+                }) : '—';
+                html += `<tr>
+                    <td><span class="rank-num">${globalIdx}</span></td>
+                    <td class="col-sn">${r.serialNumber||'—'}</td>
+                    <td>${isNg ? `<span class="col-status-ng">NG</span>` : `<span style="color:var(--pass-color);font-weight:700;font-size:0.72rem">PASS</span>`}</td>
+                    <td>${r.ngCode ? `<span class="col-code">${r.ngCode}</span>` : '<span style="color:var(--text-tertiary)">—</span>'}</td>
+                    <td class="col-reason">${r.ngReason||'—'}</td>
+                    <td class="col-desc hide-mobile">${r.ngDescription||'—'}</td>
+                    <td class="col-time">${timeStr}</td>
+                </tr>`;
+            });
+        });
+
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+
+        // Pagination
+        const pgBar = document.getElementById('detailPagination');
+        pgBar.style.display = 'flex';
+        let pgHtml = `<span class="pagination-info">Page ${currentPage} / ${totalPages} &nbsp;·&nbsp; ${total.toLocaleString()} records</span>`;
+        pgHtml += '<div class="pagination-btns">';
+        pgHtml += `<button class="pg-btn" onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>`;
+        pgHtml += `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+        // page numbers
+        for(let p=Math.max(1,currentPage-2); p<=Math.min(totalPages,currentPage+2); p++) {
+            pgHtml += `<button class="pg-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+        }
+        pgHtml += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+        pgHtml += `<button class="pg-btn" onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`;
+        pgHtml += '</div>';
+        pgBar.innerHTML = pgHtml;
+    }
+
+    window.goPage = function(p) {
+        const totalPages = Math.ceil(filteredDetailRows.length / PAGE_SIZE);
+        currentPage = Math.max(1, Math.min(totalPages, p));
+        renderDetailPage();
+        document.getElementById('ngDetailTableWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+
+    // ═══════════════════════════════════════════════
+    // TOGGLE & INIT
+    // ═══════════════════════════════════════════════
+    window.setTrendMode = function(mode, btn){
+        trendMode = mode;
+        document.querySelectorAll('#trendToggle .toggle-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        if(rawData) renderTrend(rawData);
+    };
+
+    function setDefaultDates(){
+        const to=new Date(), from=new Date();
+        from.setDate(from.getDate()-30);
+        const fmt=dt=>dt.toISOString().split('T')[0];
+        document.getElementById('f_from').value=fmt(from);
+        document.getElementById('f_to').value=fmt(to);
+    }
+
+    // ═══════════════════════════════════════════════
+    // EXPORT EXCEL
+    // ═══════════════════════════════════════════════
+    window.exportToExcel = async function() {
+        if(!rawData) { alert('Vui lòng tải dữ liệu trước khi xuất!'); return; }
+        const btn = document.getElementById('btnExport');
+        btn.disabled = true;
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg> Đang xuất...`;
+
+        try {
+            const f = getFilter();
+            const wb = XLSX.utils.book_new();
+
+            // ── Tab 0: Filter & Summary ──────────────────────
+            const summaryRows = [
+                ['FQC REPORT EXPORT'],
+                ['Generated:', new Date().toLocaleString('vi-VN')],
+                [],
+                ['── FILTER APPLIED ──'],
+                ['Work Order:', f.wo || '(All)'],
+                ['From Date:', f.from || '(All)'],
+                ['To Date:', f.to || '(All)'],
+                ['NG Code:', f.ngcode || '(All)'],
+                [],
+                ['── KPI SUMMARY ──'],
+                ['Total Scanned:', rawData.totalScanned ?? 0],
+                ['Total Pass:', rawData.totalPass ?? 0],
+                ['Total NG:', rawData.totalNg ?? 0],
+                ['Pass Rate (%):', rawData.totalScanned > 0 ? +((rawData.totalPass/rawData.totalScanned)*100).toFixed(2) : 0],
+                ['NG Rate (%):', rawData.totalScanned > 0 ? +((rawData.totalNg/rawData.totalScanned)*100).toFixed(2) : 0],
+                ['Unique Work Orders:', rawData.uniqueWo ?? 0],
+                ['Unique NG Codes:', rawData.uniqueNgCode ?? 0],
+            ];
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+            wsSummary['!cols'] = [{wch:22},{wch:20}];
+            XLSX.utils.book_append_sheet(wb, wsSummary, '📊 Summary');
+
+            // ── Tab 1: Daily Trend ────────────────────────────
+            const trendData = (rawData.dailyTrend ?? []).map(r => ({
+                'Date': r.date,
+                'PASS': r.pass,
+                'NG': r.ng,
+                'Total': r.pass + r.ng,
+                'Pass Rate (%)': (r.pass + r.ng) > 0 ? +((r.pass/(r.pass+r.ng))*100).toFixed(2) : 0,
+                'NG Rate (%)':   (r.pass + r.ng) > 0 ? +((r.ng/(r.pass+r.ng))*100).toFixed(2) : 0,
+            }));
+            if(trendData.length === 0) trendData.push({ 'Date':'(No data)', PASS:0, NG:0, Total:0, 'Pass Rate (%)':0, 'NG Rate (%)':0 });
+            const wsTrend = XLSX.utils.json_to_sheet(trendData);
+            wsTrend['!cols'] = [{wch:14},{wch:10},{wch:10},{wch:10},{wch:14},{wch:14}];
+            XLSX.utils.book_append_sheet(wb, wsTrend, '📈 Daily Trend');
+
+            // ── Tab 2: NG per Work Order ──────────────────────
+            const woData = (rawData.ngPerWo ?? []).map((r,i) => ({
+                'Rank': i+1,
+                'Work Order': r.workOrder,
+                'NG': r.ng,
+                'PASS': r.pass,
+                'Total': r.total,
+                'NG Rate (%)': r.total > 0 ? +((r.ng/r.total)*100).toFixed(2) : 0,
+            }));
+            if(woData.length === 0) woData.push({ Rank:1, 'Work Order':'(No data)', NG:0, PASS:0, Total:0, 'NG Rate (%)':0 });
+            const wsWo = XLSX.utils.json_to_sheet(woData);
+            wsWo['!cols'] = [{wch:8},{wch:22},{wch:10},{wch:10},{wch:10},{wch:14}];
+            XLSX.utils.book_append_sheet(wb, wsWo, '📦 NG per Work Order');
+
+            // ── Tab 3: Pareto NG Code ─────────────────────────
+            const ngTotal = (rawData.ngPerCode??[]).reduce((s,x)=>s+x.count,0);
+            let cumCount = 0;
+            const paretoData = (rawData.ngPerCode ?? []).map((r,i) => {
+                cumCount += r.count;
+                return {
+                    'Rank': i+1,
+                    'NG Code': r.code || '—',
+                    'Reason': r.reason || '—',
+                    'Count': r.count,
+                    'Share (%)': ngTotal > 0 ? +((r.count/ngTotal)*100).toFixed(2) : 0,
+                    'Cumulative (%)': ngTotal > 0 ? +((cumCount/ngTotal)*100).toFixed(2) : 0,
+                };
+            });
+            if(paretoData.length === 0) paretoData.push({ Rank:1, 'NG Code':'(No data)', Reason:'—', Count:0, 'Share (%)':0, 'Cumulative (%)':0 });
+            const wsPareto = XLSX.utils.json_to_sheet(paretoData);
+            wsPareto['!cols'] = [{wch:8},{wch:14},{wch:30},{wch:10},{wch:12},{wch:16}];
+            XLSX.utils.book_append_sheet(wb, wsPareto, '🔴 Pareto NG Code');
+
+            // ── Tab 4: NG Trend per WO ────────────────────────
+            const wts = rawData.ngTrendPerWo ?? {};
+            const woTrendRows = [];
+            Object.entries(wts).forEach(([wo, pts]) => {
+                pts.forEach(p => {
+                    woTrendRows.push({ 'Work Order': wo, 'Date': p.date, 'NG Count': p.ng });
+                });
+            });
+            if(woTrendRows.length === 0) woTrendRows.push({ 'Work Order':'(No data)', 'Date':'—', 'NG Count':0 });
+            const wsWoTrend = XLSX.utils.json_to_sheet(woTrendRows);
+            wsWoTrend['!cols'] = [{wch:22},{wch:14},{wch:12}];
+            XLSX.utils.book_append_sheet(wb, wsWoTrend, '📉 NG Trend per WO');
+
+            // ── Tab 5: NG Code Stacked per WO ────────────────
+            const stackData = rawData.ngCodePerWo ?? {};
+            const allCodes = [...new Set(Object.values(stackData).flatMap(v=>Object.keys(v)))];
+            const stackRows = Object.entries(stackData).map(([wo, codeMap]) => {
+                const row = { 'Work Order': wo };
+                allCodes.forEach(c => { row[c] = codeMap[c] ?? 0; });
+                return row;
+            });
+            if(stackRows.length === 0) stackRows.push({ 'Work Order':'(No data)' });
+            const wsStack = XLSX.utils.json_to_sheet(stackRows);
+            wsStack['!cols'] = [{wch:22}, ...allCodes.map(()=>({wch:12}))];
+            XLSX.utils.book_append_sheet(wb, wsStack, '🧱 NG Code per WO');
+
+            // ── Tab 6: Heatmap ────────────────────────────────
+            const heatMatrix = rawData.heatmap ?? {};
+            const DAYS_H = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+            const hmRows = [];
+            for(let h=0; h<24; h++) {
+                const row = { 'Hour': `${String(h).padStart(2,'0')}:00` };
+                DAYS_H.forEach((day, dw) => { row[day] = heatMatrix[h]?.[dw] ?? 0; });
+                hmRows.push(row);
+            }
+            const wsHeatmap = XLSX.utils.json_to_sheet(hmRows);
+            wsHeatmap['!cols'] = [{wch:10}, ...DAYS_H.map(()=>({wch:10}))];
+            XLSX.utils.book_append_sheet(wb, wsHeatmap, '🌡️ Heatmap');
+
+            // ── Tab 7: NG Detail ──────────────────────────────
+            const detailRows = (rawData.ngDetailRows ?? allDetailRows).map((r,i) => ({
+                '#': i+1,
+                'Work Order': r.workOrder || '—',
+                'Serial Number': r.serialNumber || '—',
+                'Status': r.status || '—',
+                'NG Code': r.ngCode || '—',
+                'NG Reason': r.ngReason || '—',
+                'NG Description': r.ngDescription || '—',
+                'Time': r.timeline ? new Date(r.timeline).toLocaleString('vi-VN') : '—',
+            }));
+            if(detailRows.length === 0) detailRows.push({ '#':1, 'Work Order':'(No NG data)', 'Serial Number':'—', Status:'—', 'NG Code':'—', 'NG Reason':'—', 'NG Description':'—', Time:'—' });
+            const wsDetail = XLSX.utils.json_to_sheet(detailRows);
+            wsDetail['!cols'] = [{wch:6},{wch:22},{wch:18},{wch:8},{wch:12},{wch:25},{wch:30},{wch:20}];
+            XLSX.utils.book_append_sheet(wb, wsDetail, '📋 NG Detail');
+
+            // Save
+            const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+            const woLabel = f.wo ? `_${f.wo.replace(/\//g,'-')}` : '';
+            XLSX.writeFile(wb, `FQC_Report_${dateStr}${woLabel}.xlsx`);
+
+        } catch(err) {
+            console.error('Export error:', err);
+            alert('Xuất Excel thất bại. Vui lòng thử lại.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Xuất Excel`;
+        }
+    };
+
+    window.loadAll = loadAll;
+    window.resetFilter = resetFilter;
+    setDefaultDates();
+    loadAll();
+
+}());
+</script>
+}

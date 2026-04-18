@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ScanCheckSakura.Models
 {
-    [Table("SM_FQCBP_H")]
-    public class SM_FQCBP_H
+    [Table("SM_FQCBP_H_Dev")]
+    public class SM_FQCBP_H_Dev
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -25,6 +25,10 @@ namespace ScanCheckSakura.Models
         public DateTime Timeline { get; set; } = DateTime.Now;
 
         // ── NG detail (nullable — chỉ dùng khi Status == "NG") ──
+
+        [MaxLength(50)]
+        public string? NgCode { get; set; }
+
         [MaxLength(200)]
         public string? NgReason { get; set; }
 
