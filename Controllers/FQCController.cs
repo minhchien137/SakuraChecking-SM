@@ -166,26 +166,121 @@ public class FQCController : Controller
         return File(bytes, "text/csv", fileName);
     }
 
+    // ── Trạm A: chỉ comment, không có TestLog ────────────────
     [HttpPost]
     public async Task<IActionResult> SendOdooComment([FromBody] OdooCommentRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.SerialNumber))
-            return BadRequest(new { message = "SerialNumber is required" });
+            return BadRequest(new { success = false, message = "SerialNumber is required" });
         if (string.IsNullOrWhiteSpace(req.CommentBody))
-            return BadRequest(new { message = "CommentBody is required" });
+            return BadRequest(new { success = false, message = "CommentBody is required" });
 
-        await _fqcOdooService.PostCommentBySerialAsync(
-            req.SerialNumber.Trim().ToUpper(),
-            req.CommentBody.Trim()
-        );
+        var sn = req.SerialNumber.Trim().ToUpper();
+        var body = req.CommentBody.Trim();
 
-        return Ok(new { message = "Comment sent" });
+        try
+        {
+            await _fqcOdooService.PostCommentBySerialAsync(sn, body);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Comment sent successfully",
+                detail = new { serialNumber = sn, commentBody = body }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Failed to send comment to Odoo",
+                error = ex.Message,
+                detail = new
+                {
+                    serialNumber = sn,
+                    commentBody = body,
+                    exceptionType = ex.GetType().Name,
+                    stackTrace = ex.StackTrace
+                }
+            });
+        }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> getWOFromSerial([FromQuery] string serial)
+    {
+        if (string.IsNullOrWhiteSpace(serial))
+            return BadRequest(new { message = "serial is required" });
+
+        var sn = serial.Trim().ToUpper();
+
+        var record = await _db.SVN_ProductionInputLogs
+            .Where(x => x.SerialCode != null && x.SerialCode.ToUpper() == sn)
+            .OrderByDescending(x => x.DateFinished)
+            .Select(x => x.MasterWoCode)
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(record))
+            return NotFound(new { message = $"Serial '{sn}' not found" });
+
+        return Ok(new { workOrder = record });
+    }
+
+
+    // ── Trạm B: comment + TestLog ─────────────────────────────
+    [HttpPost]
+    public async Task<IActionResult> SendOdooCommentBackPanel([FromBody] OdooCommentV2Request req)
+    {
+        if (string.IsNullOrWhiteSpace(req.SerialNumber))
+            return BadRequest(new { success = false, message = "SerialNumber is required" });
+        if (string.IsNullOrWhiteSpace(req.CommentBody))
+            return BadRequest(new { success = false, message = "CommentBody is required" });
+
+        var sn = req.SerialNumber.Trim().ToUpper();
+        var body = req.CommentBody.Trim();
+
+        try
+        {
+            await _fqcOdooService.PostCommentBySerialWithLogAsync(sn, body, req.TestLog);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Comment sent successfully",
+                detail = new { serialNumber = sn, commentBody = body }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Failed to send comment to Odoo",
+                error = ex.Message,
+                detail = new
+                {
+                    serialNumber = sn,
+                    commentBody = body,
+                    exceptionType = ex.GetType().Name,
+                    stackTrace = ex.StackTrace
+                }
+            });
+        }
+    }
+
+    // ── Request models ────────────────────────────────────────
     public class OdooCommentRequest
     {
         public string SerialNumber { get; set; } = string.Empty;
         public string CommentBody { get; set; } = string.Empty;
+    }
+
+    public class OdooCommentV2Request
+    {
+        public string SerialNumber { get; set; } = string.Empty;
+        public string CommentBody { get; set; } = string.Empty;
+        public System.Text.Json.JsonElement TestLog { get; set; }
     }
 
 }

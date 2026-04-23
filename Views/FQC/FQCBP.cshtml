@@ -460,7 +460,7 @@
         woStatusText.className   = 'wo-status-text';
 
         try {
-            const res = await fetch(`${pathBase}/api/Odoo/getworkorderfromserial?serial=${encodeURIComponent(sn)}`);
+            const res = await fetch(`${pathBase}/FQC/getWOFromSerial?serial=${encodeURIComponent(sn)}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const wo   = data.workOrder;

@@ -446,7 +446,6 @@ C:\ScanCheckSakura\bin\Release\net9.0\win-x64\createdump.exe
 C:\ScanCheckSakura\bin\Release\net9.0\win-x64\hostfxr.dll
 C:\ScanCheckSakura\bin\Release\net9.0\win-x64\hostpolicy.dll
 C:\ScanCheckSakura\bin\Release\net9.0\win-x64\mscordaccore.dll
-C:\ScanCheckSakura\bin\Release\net9.0\win-x64\mscordaccore_amd64_amd64_9.0.1225.60609.dll
 C:\ScanCheckSakura\bin\Release\net9.0\win-x64\mscordbi.dll
 C:\ScanCheckSakura\bin\Release\net9.0\win-x64\mscorrc.dll
 C:\ScanCheckSakura\bin\Release\net9.0\win-x64\msquic.dll
@@ -536,10 +535,11 @@ C:\ScanCheckSakura\obj\Release\net9.0\win-x64\staticwebassets.build.json.cache
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\staticwebassets.development.json
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\staticwebassets.build.endpoints.json
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\swae.build.ex.cache
-C:\ScanCheckSakura\obj\Release\net9.0\win-x64\staticwebassets.upToDateCheck.txt
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\ScanChec.4827B787.Up2Date
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\ScanCheckSakura.dll
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\refint\ScanCheckSakura.dll
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\ScanCheckSakura.pdb
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\ScanCheckSakura.genruntimeconfig.cache
 C:\ScanCheckSakura\obj\Release\net9.0\win-x64\ref\ScanCheckSakura.dll
+C:\ScanCheckSakura\bin\Release\net9.0\win-x64\mscordaccore_amd64_amd64_9.0.1526.17522.dll
+C:\ScanCheckSakura\obj\Release\net9.0\win-x64\staticwebassets.upToDateCheck.txt

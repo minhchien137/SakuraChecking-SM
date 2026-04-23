@@ -15,6 +15,8 @@ namespace ScanCheckSakura.Data
          // *********** FQCBP ************
         public DbSet<SM_FQCBP>   SM_FQCBP   { get; set; }
         public DbSet<SM_FQCBP_H> SM_FQCBP_H { get; set; }
+
+        public DbSet<SVN_ProductionInputLogs> SVN_ProductionInputLogs { get; set; }
     
 
     }
