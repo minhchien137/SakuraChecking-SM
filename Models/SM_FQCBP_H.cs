@@ -25,6 +25,10 @@ namespace ScanCheckSakura.Models
         public DateTime Timeline { get; set; } = DateTime.Now;
 
         // ── NG detail (nullable — chỉ dùng khi Status == "NG") ──
+
+        [MaxLength(50)]
+        public string? NgCode { get; set; }
+
         [MaxLength(200)]
         public string? NgReason { get; set; }
 

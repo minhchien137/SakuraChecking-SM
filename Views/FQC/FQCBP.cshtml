@@ -296,7 +296,7 @@
 
         <div class="ng-dialog__header">
             <span class="ng-dialog__icon">✕</span>
-            <span class="ng-dialog__title">NG — Chọn mã lỗi / Select Defect Code</span>
+            <span class="ng-dialog__title">NG — 选择不良代码 / NG — Select Defect Code</span>
             <span class="ng-dialog__sn" id="ngDialogSN"></span>
         </div>
 
@@ -304,43 +304,43 @@
         <div class="ng-search-wrap">
             <span class="ng-search-icon">🔍</span>
             <input type="text" class="ng-search-input" id="ngSearchInput"
-                   placeholder="Tìm theo code hoặc tên... / Search by code or name..."
+                   placeholder="按代码或名称搜索... / Search by code or name..."
                    autocomplete="off" />
         </div>
 
         <div class="ng-dialog__section-label">
-            Mã lỗi / Defect Code
+            不良代码 / Defect Code
             <span class="ng-count-badge" id="ngCountBadge"></span>
         </div>
 
         <div class="ng-reason-grid" id="ngReasonGrid">
-            <div class="ng-reason-loading">Đang tải… / Loading…</div>
+            <div class="ng-reason-loading">正在加载… / Loading…</div>
         </div>
 
         <!-- Selected preview strip -->
         <div class="ng-selected-preview" id="ngSelectedPreview">
-            <span class="ng-selected-preview__label">Đã chọn:</span>
+            <span class="ng-selected-preview__label">已选择:</span>
             <span class="ng-selected-preview__code"  id="ngPreviewCode"></span>
             <span class="ng-selected-preview__sep">—</span>
             <span class="ng-selected-preview__name"  id="ngPreviewName"></span>
         </div>
 
         <div class="ng-dialog__section-label" style="margin-top:0.25rem;">
-            Mô tả / Description
-            <span style="font-weight:400;color:var(--text-tertiary);text-transform:none;letter-spacing:0">(tùy chọn / optional)</span>
+            描述 / Description
+            <span style="font-weight:400;color:var(--text-tertiary);text-transform:none;letter-spacing:0">（可选） / (optional)</span>
         </div>
         <textarea class="ng-desc-input" id="ngDescInput"
-                  placeholder="Nhập mô tả thêm nếu cần... / Additional details (optional)..."
+                  placeholder="请输入更多描述... / Additional details (optional)..."
                   rows="2"></textarea>
 
         <div class="ng-dialog__actions">
-            <button class="btn-ng-skip"    id="btnNgSkip">Bỏ qua / Skip</button>
-            <button class="btn-ng-confirm" id="btnNgConfirm">✕ Xác nhận NG</button>
+            <button class="btn-ng-skip"    id="btnNgSkip">跳过 / Skip</button>
+            <button class="btn-ng-confirm" id="btnNgConfirm">✕ 确认不良 / Confirm NG</button>
         </div>
         <div class="ng-hint">
-            Phím số <kbd class="key">1</kbd>–<kbd class="key">9</kbd> chọn trong danh sách &nbsp;·&nbsp;
-            <kbd class="key">Enter</kbd> xác nhận &nbsp;·&nbsp;
-            <kbd class="key">Esc</kbd> bỏ qua
+            Phím số <kbd class="key">1</kbd>–<kbd class="key">9</kbd> 从列表中选择 / Select from the list &nbsp;·&nbsp;
+            <kbd class="key">输入 / Enter</kbd> 确认 / Confirm &nbsp;·&nbsp;
+            <kbd class="key">退出 / Esc</kbd> 跳过 / Skip
         </div>
 
     </div>
@@ -506,10 +506,10 @@
     // ── Render grid ───────────────────────────────────────
     function renderGrid(list) {
         filteredReasons = list;
-        ngCountBadge.textContent = `${list.length} mã lỗi`;
+        ngCountBadge.textContent = `${list.length} 不良代码 / Defect Code`;
 
         if (list.length === 0) {
-            ngReasonGrid.innerHTML = '<div class="ng-reason-empty">Không tìm thấy / Not found</div>';
+            ngReasonGrid.innerHTML = '<div class="ng-reason-empty">未找到 / Not found</div>';
             return;
         }
 
@@ -746,7 +746,7 @@
         woStatusText.textContent = '查找工单中… / Looking up WO…';
         woStatusText.className   = 'wo-status-text';
         try {
-            const res = await fetch(`${pathBase}/api/Odoo/getworkorderfromserial?serial=${encodeURIComponent(sn)}`);
+            const res = await fetch(`${pathBase}/FQC/getWOFromSerial?serial=${encodeURIComponent(sn)}`);
             if (!res.ok) throw new Error();
             const data = await res.json();
             const wo   = data.workOrder;

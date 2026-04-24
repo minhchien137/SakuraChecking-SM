@@ -21,7 +21,7 @@ namespace ScanCheckSakura.Services
 
         public async Task<(int qty, int passQty, int ngQty)> GetQtyAsync(string workOrder)
         {
-            var record = await _db.SM_FQCBP_Dev.FirstOrDefaultAsync(x => x.WorkOrder == workOrder);
+            var record = await _db.SM_FQCBP.FirstOrDefaultAsync(x => x.WorkOrder == workOrder);
             if (record == null) return (0, 0, 0);
             return (record.Qty, record.PassQty, record.NgQty);
         }
@@ -30,7 +30,7 @@ namespace ScanCheckSakura.Services
             string workOrder, string serialNumber, string status,
             string? ngCode = null, string? ngReason = null, string? ngDescription = null)
         {
-            var history = new SM_FQCBP_H_Dev
+            var history = new SM_FQCBP_H
             {
                 WorkOrder     = workOrder,
                 SerialNumber  = serialNumber,
@@ -40,19 +40,19 @@ namespace ScanCheckSakura.Services
                 NgReason      = status == "NG" ? ngReason      : null,
                 NgDescription = status == "NG" ? ngDescription : null
             };
-            _db.SM_FQCBP_H_Dev.Add(history);
+            _db.SM_FQCBP_H.Add(history);
 
-            var summary = await _db.SM_FQCBP_Dev.FirstOrDefaultAsync(x => x.WorkOrder == workOrder);
+            var summary = await _db.SM_FQCBP.FirstOrDefaultAsync(x => x.WorkOrder == workOrder);
             if (summary == null)
             {
-                summary = new SM_FQCBP_Dev
+                summary = new SM_FQCBP
                 {
                     WorkOrder = workOrder,
                     Qty       = 1,
                     PassQty   = status == "PASS" ? 1 : 0,
                     NgQty     = status == "NG"   ? 1 : 0
                 };
-                _db.SM_FQCBP_Dev.Add(summary);
+                _db.SM_FQCBP.Add(summary);
             }
             else
             {

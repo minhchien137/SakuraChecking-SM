@@ -83,7 +83,7 @@ public class FQCController : Controller
         sn = sn.Trim().ToUpper();
         wo = wo?.Trim().ToUpper() ?? "";
 
-        var exists = await _db.SM_FQCBP_H_Dev.AnyAsync(x => x.SerialNumber == sn && x.WorkOrder == wo);
+        var exists = await _db.SM_FQCBP_H.AnyAsync(x => x.SerialNumber == sn && x.WorkOrder == wo);
         return Json(new { isDuplicate = exists });
     }
 
@@ -94,7 +94,7 @@ public class FQCController : Controller
         filter.Page     = Math.Max(1, filter.Page);
         filter.PageSize = filter.PageSize > 0 ? filter.PageSize : 50;
 
-        var query = _db.SM_FQCBP_H_Dev.AsQueryable();
+        var query = _db.SM_FQCBP_H.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.WorkOrder))
             query = query.Where(x => x.WorkOrder.Contains(filter.WorkOrder.Trim().ToUpper()));
@@ -137,7 +137,7 @@ public class FQCController : Controller
     [HttpGet]
     public async Task<IActionResult> FQCBPExport(FQCBPLogFilter filter)
     {
-        var query = _db.SM_FQCBP_H_Dev.AsQueryable();
+        var query = _db.SM_FQCBP_H.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.WorkOrder))
             query = query.Where(x => x.WorkOrder.Contains(filter.WorkOrder.Trim().ToUpper()));
@@ -179,7 +179,7 @@ public class FQCController : Controller
     [HttpGet]
     public async Task<IActionResult> reportData([FromQuery] FQCReportFilter filter)
     {
-        var query = _db.SM_FQCBP_H_Dev.AsQueryable();
+        var query = _db.SM_FQCBP_H.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.WorkOrder))
             query = query.Where(x => x.WorkOrder.Contains(filter.WorkOrder.Trim().ToUpper()));
@@ -309,7 +309,27 @@ public class FQCController : Controller
             ngDetailRows    // ← MỚI: bảng detail NG
         });
     }
- 
+
+    [HttpGet]
+    public async Task<IActionResult> getWOFromSerial([FromQuery] string serial)
+    {
+        if (string.IsNullOrWhiteSpace(serial))
+            return BadRequest(new { message = "serial is required" });
+
+        var sn = serial.Trim().ToUpper();
+
+        var record = await _db.SVN_ProductionInputLogs
+            .Where(x => x.SerialCode != null && x.SerialCode.ToUpper() == sn)
+            .OrderByDescending(x => x.DateFinished)
+            .Select(x => x.MasterWoCode)
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(record))
+            return NotFound(new { message = $"Serial '{sn}' not found" });
+
+        return Ok(new { workOrder = record });
+    }
+
  
 
     [HttpPost]

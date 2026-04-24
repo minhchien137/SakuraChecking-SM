@@ -14,7 +14,7 @@ namespace ScanCheckSakura.Models
 
     public class FQCBPLogViewModel
     {
-        public List<SM_FQCBP_H_Dev> Logs { get; set; } = new();
+        public List<SM_FQCBP_H> Logs { get; set; } = new();
         public FQCBPLogFilter Filter      { get; set; } = new();
         public int TotalCount  { get; set; }
         public int PassCount   { get; set; }
