@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ScanCheckSakura.Data;
@@ -228,7 +229,7 @@ public class FQCController : Controller
     }
 
 
-    // ── Trạm B: comment + TestLog ─────────────────────────────
+    // ── Trạm Back Panel: comment + TestLog ─────────────────────────────
     [HttpPost]
     public async Task<IActionResult> SendOdooCommentBackPanel([FromBody] OdooCommentV2Request req)
     {
@@ -268,6 +269,59 @@ public class FQCController : Controller
             });
         }
     }
+
+
+    // ── Trạm Middle Panel: comment + TestLog theo Lot Number ─────
+    [HttpPost]
+    public async Task<IActionResult> SendOdooCommentMiddlePanel([FromBody] OdooCommentMiddlePanelRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.LotNumber))
+            return BadRequest(new { success = false, message = "LotNumber is required" });
+        if (string.IsNullOrWhiteSpace(req.CommentBody))
+            return BadRequest(new { success = false, message = "CommentBody is required" });
+
+        var lot = req.LotNumber.Trim().ToUpper();
+        var body = req.CommentBody.Trim();
+
+        try
+        {
+            await _fqcOdooService.PostCommentByLotWithLogAsync(lot, body, req.TestLog);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Comment sent successfully",
+                detail = new { lotNumber = lot, commentBody = body }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Failed to send comment to Odoo",
+                error = ex.Message,
+                detail = new
+                {
+                    lotNumber = lot,
+                    commentBody = body,
+                    exceptionType = ex.GetType().Name,
+                    stackTrace = ex.StackTrace
+                }
+            });
+        }
+    }
+
+    
+
+    // Request model
+    public class OdooCommentMiddlePanelRequest
+    {
+        public string LotNumber { get; set; } = string.Empty;
+        public string CommentBody { get; set; } = string.Empty;
+        public JsonElement TestLog { get; set; }
+    }
+
 
     // ── Request models ────────────────────────────────────────
     public class OdooCommentRequest
