@@ -8,7 +8,8 @@ namespace ScanCheckSakura.Models
     public class FQCReportFilter
     {
         public string?   WorkOrder { get; set; }
-        public string?   NgCode    { get; set; }
+        public string? NgCode { get; set; }
+        public string? COlor { get; set; }
         public DateTime? DateFrom  { get; set; }
         public DateTime? DateTo    { get; set; }
     }

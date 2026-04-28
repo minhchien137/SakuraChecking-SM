@@ -1,6 +1,14 @@
 @model ScanCheckSakura.Models.FQCBPLogViewModel
 @{
     ViewData["Title"] = "FQC 检查历史 Inspection History";
+
+    var colorHexMap = new Dictionary<string, string> {
+        {"Blue","#3b82f6"},{"Green","#22c55e"},{"Pink","#ec4899"},
+        {"Red","#ef4444"},{"Black","#64748b"},{"White","#e2e8f0"},
+        {"Yellow","#eab308"},{"Orange","#f97316"},{"Purple","#a78bfa"},
+        {"Grey","#94a3b8"}
+    };
+    var colorOptions = colorHexMap.Keys.ToArray();
 }
 
 <style>
@@ -36,8 +44,8 @@
     .stat-chip__lbl { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
 
     .filter-panel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
-    /* 7 columns: WO | SN | NgCode | Status | DateFrom | DateTo | Actions */
-    .filter-grid { display: grid; grid-template-columns: 1.4fr 1.1fr 0.9fr 120px 150px 150px auto; gap: 0.75rem 1rem; align-items: end; }
+    /* 8 columns: WO | SN | NgCode | Color | Status | DateFrom | DateTo | Actions */
+    .filter-grid { display: grid; grid-template-columns: 1.4fr 1.1fr 0.9fr 0.9fr 120px 150px 150px auto; gap: 0.75rem 1rem; align-items: end; }
     @@media (max-width: 1200px) { .filter-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
     @@media (max-width: 640px)  { .filter-grid { grid-template-columns: 1fr; } }
 
@@ -71,6 +79,7 @@
     .td-time   { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; }
     .td-mono   { font-family: 'Courier New', monospace; font-size: 0.88rem; }
     .td-empty  { color: var(--text-tertiary); font-size: 0.78rem; }
+    .td-color  { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; }
 
     /* NG Code badge – prominent */
     .ng-code-badge {
@@ -149,6 +158,17 @@
                 </div>
 
                 <div class="filter-group">
+                    <label>颜色 Color</label>
+                    <select name="Color">
+                        <option value="">-- 全部 All --</option>
+                        @foreach (var c in colorOptions)
+                        {
+                            <option value="@c" selected="@(Model.Filter.Color == c ? "selected" : null)">@c</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
                     <label>状态 Status</label>
                     <select name="Status">
                         <option value=""     selected="@(string.IsNullOrEmpty(Model.Filter.Status) ? "selected" : null)">-- 全部 All --</option>
@@ -178,6 +198,7 @@
                        asp-route-SerialNumber="@Model.Filter.SerialNumber"
                        asp-route-Status="@Model.Filter.Status"
                        asp-route-NgCode="@Model.Filter.NgCode"
+                       asp-route-Color="@Model.Filter.Color"
                        asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
                        asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")"
                        class="btn-excel">↓ 导出 Export</a>
@@ -209,6 +230,7 @@
                             <th>时间 TIME (UTC+8)</th>
                             <th>工单 WORK ORDER</th>
                             <th>序列号 SERIAL NUMBER</th>
+                            <th>颜色 COLOR</th>
                             <th>状态 STATUS</th>
                             <th>不良代码 NG Code</th>
                             <th>NG 原因 REASON</th>
@@ -224,6 +246,17 @@
                                 <td class="td-time">@log.Timeline.AddHours(1).ToString("dd/MM/yyyy HH:mm:ss")</td>
                                 <td class="td-mono">@log.WorkOrder</td>
                                 <td class="td-mono">@log.SerialNumber</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(log.Color))
+                                    {
+                                        var hex = colorHexMap.TryGetValue(log.Color, out var h) ? h : "#94a3b8";
+                                        <span class="td-color">
+                                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:@hex;flex-shrink:0"></span>
+                                            @log.Color
+                                        </span>
+                                    }
+                                    else { <span class="td-empty">—</span> }
+                                </td>
                                 <td>
                                     <span class="pill @(log.Status == "PASS" ? "pill-pass" : "pill-ng")">
                                         @(log.Status == "PASS" ? "✓ PASS" : "✗ NG")
@@ -263,6 +296,7 @@
                    asp-route-Page="@(Model.CurrentPage - 1)" asp-route-PageSize="@Model.Filter.PageSize"
                    asp-route-WorkOrder="@Model.Filter.WorkOrder"   asp-route-SerialNumber="@Model.Filter.SerialNumber"
                    asp-route-Status="@Model.Filter.Status"         asp-route-NgCode="@Model.Filter.NgCode"
+                   asp-route-Color="@Model.Filter.Color"
                    asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
                    asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">←</a>
 
@@ -273,6 +307,7 @@
                        asp-route-Page="@p" asp-route-PageSize="@Model.Filter.PageSize"
                        asp-route-WorkOrder="@Model.Filter.WorkOrder"   asp-route-SerialNumber="@Model.Filter.SerialNumber"
                        asp-route-Status="@Model.Filter.Status"         asp-route-NgCode="@Model.Filter.NgCode"
+                       asp-route-Color="@Model.Filter.Color"
                        asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
                        asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">@p</a>
                 }
@@ -282,6 +317,7 @@
                    asp-route-Page="@(Model.CurrentPage + 1)" asp-route-PageSize="@Model.Filter.PageSize"
                    asp-route-WorkOrder="@Model.Filter.WorkOrder"   asp-route-SerialNumber="@Model.Filter.SerialNumber"
                    asp-route-Status="@Model.Filter.Status"         asp-route-NgCode="@Model.Filter.NgCode"
+                   asp-route-Color="@Model.Filter.Color"
                    asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
                    asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">→</a>
             </div>

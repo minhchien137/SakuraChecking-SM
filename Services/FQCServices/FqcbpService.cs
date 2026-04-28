@@ -10,6 +10,7 @@ namespace ScanCheckSakura.Services
 
         Task<(int qty, int passQty, int ngQty)> RecordScanAsync(
             string workOrder, string serialNumber, string status,
+            string? color = null,
             string? ngCode = null, string? ngReason = null, string? ngDescription = null);
     }
 
@@ -28,6 +29,7 @@ namespace ScanCheckSakura.Services
 
         public async Task<(int qty, int passQty, int ngQty)> RecordScanAsync(
             string workOrder, string serialNumber, string status,
+            string? color = null,
             string? ngCode = null, string? ngReason = null, string? ngDescription = null)
         {
             var history = new SM_FQCBP_H
@@ -36,6 +38,7 @@ namespace ScanCheckSakura.Services
                 SerialNumber  = serialNumber,
                 Status        = status,
                 Timeline      = DateTime.Now,
+                Color         = string.IsNullOrWhiteSpace(color) ? null : color.Trim(),
                 NgCode        = status == "NG" ? ngCode        : null,
                 NgReason      = status == "NG" ? ngReason      : null,
                 NgDescription = status == "NG" ? ngDescription : null

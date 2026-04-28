@@ -24,6 +24,9 @@ namespace ScanCheckSakura.Models
 
         public DateTime Timeline { get; set; } = DateTime.Now;
 
+        [MaxLength(50)]
+        public string? Color { get; set; }
+
         // ── NG detail (nullable — chỉ dùng khi Status == "NG") ──
 
         [MaxLength(50)]

@@ -59,8 +59,11 @@
     /* ── Filter Panel ── */
     .filter-panel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
     .filter-panel h3 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 0.85rem; }
-    .filter-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 0.65rem 0.9rem; align-items: end; }
+    .filter-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 0.65rem 0.9rem; align-items: end; }
     @@media (max-width: 1100px) { .filter-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    /* Color dot inside select option */
+    .color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     @@media (max-width: 640px)  { .filter-grid { grid-template-columns: 1fr 1fr; } }
     @@media (max-width: 420px)  { .filter-grid { grid-template-columns: 1fr; } }
     .filter-group { display: flex; flex-direction: column; gap: 4px; }
@@ -273,6 +276,12 @@
             <div class="filter-group">
                 <label>NG Code / 不良代码</label>
                 <input type="text" id="f_ngcode" placeholder="Filter by NG code" />
+            </div>
+            <div class="filter-group">
+                <label>Color / 颜色</label>
+                <select id="f_color">
+                    <option value="">All Colors / 全部颜色</option>
+                </select>
             </div>
             <div class="filter-actions">
                 <button class="btn-apply" onclick="loadAll()">▶ 应用 / Apply</button>
@@ -523,6 +532,7 @@
             from:   document.getElementById('f_from').value,
             to:     document.getElementById('f_to').value,
             ngcode: document.getElementById('f_ngcode').value.trim().toUpperCase(),
+            color:  document.getElementById('f_color').value.trim(),
         };
     }
     function buildQuery(f) {
@@ -531,10 +541,12 @@
         if (f.from)   p.set('dateFrom',  f.from);
         if (f.to)     p.set('dateTo',    f.to);
         if (f.ngcode) p.set('ngCode',    f.ngcode);
+        if (f.color)  p.set('color',     f.color);
         return p.toString();
     }
     function resetFilter() {
         ['f_wo','f_from','f_to','f_ngcode'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('f_color').value = '';
         setDefaultDates();
         loadAll();
     }
@@ -603,6 +615,35 @@
         // Render detail table từ ngDetailRows nếu backend trả về, hoặc để trống
         const detail = rawData.ngDetailRows ?? [];
         renderNgDetail(detail);
+
+        // Populate Color dropdown (giữ giá trị đang chọn nếu có)
+        populateColorDropdown(rawData.availableColors ?? []);
+    }
+
+    // ═══════════════════════════════════════════════
+    // COLOR DROPDOWN
+    // ═══════════════════════════════════════════════
+    const COLOR_MAP = {
+        'Blue':'#3b82f6','Green':'#22c55e','Pink':'#ec4899',
+        'Red':'#ef4444','Black':'#64748b','White':'#e2e8f0',
+        'Yellow':'#eab308','Orange':'#f97316','Purple':'#a78bfa',
+        'Grey':'#94a3b8','Gray':'#94a3b8'
+    };
+    function colorDot(name) {
+        const hex = COLOR_MAP[name] || '#94a3b8';
+        return `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${hex};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>`;
+    }
+    function populateColorDropdown(colors) {
+        const sel = document.getElementById('f_color');
+        const cur = sel.value; // giữ lại lựa chọn hiện tại
+        sel.innerHTML = '<option value="">All Colors / 全部颜色</option>';
+        colors.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            sel.appendChild(opt);
+        });
+        if (cur) sel.value = cur; // restore
     }
 
     // ═══════════════════════════════════════════════
@@ -1031,6 +1072,7 @@
                 <th>#</th>
                 <th>Serial Number</th>
                 <th>Status</th>
+                <th class="hide-mobile">Color</th>
                 <th>NG Code</th>
                 <th>Reason / 原因</th>
                 <th class="hide-mobile">Description</th>
@@ -1041,7 +1083,7 @@
         Object.entries(grouped).forEach(([wo, rows]) => {
             const sum = woSummary[wo] || { ng:0, pass:0 };
             html += `<tr class="wo-group-header">
-                <td colspan="7">
+                <td colspan="8">
                     <div class="wo-group-label">
                         <span>📦 ${wo}</span>
                         <span class="wo-group-ng-badge">NG: ${sum.ng}</span>
@@ -1056,10 +1098,15 @@
                     year:'numeric', month:'2-digit', day:'2-digit',
                     hour:'2-digit', minute:'2-digit'
                 }) : '—';
+                const colorHex = COLOR_MAP[r.color] || '#94a3b8';
+                const colorCell = r.color
+                    ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.75rem;color:var(--text-secondary)"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colorHex};flex-shrink:0"></span>${r.color}</span>`
+                    : '<span style="color:var(--text-tertiary)">—</span>';
                 html += `<tr>
                     <td><span class="rank-num">${globalIdx}</span></td>
                     <td class="col-sn">${r.serialNumber||'—'}</td>
                     <td>${isNg ? `<span class="col-status-ng">NG</span>` : `<span style="color:var(--pass-color);font-weight:700;font-size:0.72rem">PASS</span>`}</td>
+                    <td class="hide-mobile">${colorCell}</td>
                     <td>${r.ngCode ? `<span class="col-code">${r.ngCode}</span>` : '<span style="color:var(--text-tertiary)">—</span>'}</td>
                     <td class="col-reason">${r.ngReason||'—'}</td>
                     <td class="col-desc hide-mobile">${r.ngDescription||'—'}</td>
@@ -1242,14 +1289,15 @@
                 'Work Order': r.workOrder || '—',
                 'Serial Number': r.serialNumber || '—',
                 'Status': r.status || '—',
+                'Color': r.color || '—',
                 'NG Code': r.ngCode || '—',
                 'NG Reason': r.ngReason || '—',
                 'NG Description': r.ngDescription || '—',
                 'Time': r.timeline ? new Date(r.timeline).toLocaleString('vi-VN') : '—',
             }));
-            if(detailRows.length === 0) detailRows.push({ '#':1, 'Work Order':'(No NG data)', 'Serial Number':'—', Status:'—', 'NG Code':'—', 'NG Reason':'—', 'NG Description':'—', Time:'—' });
+            if(detailRows.length === 0) detailRows.push({ '#':1, 'Work Order':'(No NG data)', 'Serial Number':'—', Status:'—', Color:'—', 'NG Code':'—', 'NG Reason':'—', 'NG Description':'—', Time:'—' });
             const wsDetail = XLSX.utils.json_to_sheet(detailRows);
-            wsDetail['!cols'] = [{wch:6},{wch:22},{wch:18},{wch:8},{wch:12},{wch:25},{wch:30},{wch:20}];
+            wsDetail['!cols'] = [{wch:6},{wch:22},{wch:18},{wch:8},{wch:12},{wch:12},{wch:25},{wch:30},{wch:20}];
             XLSX.utils.book_append_sheet(wb, wsDetail, '📋 NG Detail');
 
             // Save

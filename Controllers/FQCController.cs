@@ -9,12 +9,19 @@ public class FQCController : Controller
     private readonly IFqcbpService   _fqcbpService;
     private readonly IFqcOdooService _fqcOdooService;
     private readonly ApplicationDbContext _db;
+    // Inject HttpClientFactory để gọi Odoo lấy color
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public FQCController(IFqcbpService fqcbpService, IFqcOdooService fqcOdooService, ApplicationDbContext db)
+    public FQCController(
+        IFqcbpService fqcbpService,
+        IFqcOdooService fqcOdooService,
+        ApplicationDbContext db,
+        IHttpClientFactory httpClientFactory)
     {
-        _fqcbpService   = fqcbpService;
-        _fqcOdooService = fqcOdooService;
-        _db             = db;
+        _fqcbpService      = fqcbpService;
+        _fqcOdooService    = fqcOdooService;
+        _db                = db;
+        _httpClientFactory = httpClientFactory;
     }
 
     public IActionResult FQCBP() => View();
@@ -43,6 +50,25 @@ public class FQCController : Controller
         return Json(reasons);
     }
 
+    // ── Helper: gọi /api/Odoo/search để lấy color theo WO ──
+    private async Task<string?> FetchColorFromOdooAsync(string workOrder)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var pathBase = Request.PathBase.Value?.TrimEnd('/') ?? "";
+            var url = $"{Request.Scheme}://{Request.Host}{pathBase}/api/Odoo/search?productionCode={Uri.EscapeDataString(workOrder)}";
+            var res = await client.GetAsync(url);
+            if (!res.IsSuccessStatusCode) return null;
+            var json = await res.Content.ReadAsStringAsync();
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("productColor", out var c))
+                return c.GetString();
+        }
+        catch { }
+        return null;
+    }
+
     // ── POST /FQC/scan ────────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -58,8 +84,14 @@ public class FQCController : Controller
         var wo = req.WorkOrder.Trim().ToUpper();
         var sn = req.SerialNumber.Trim().ToUpper();
 
+        // ── Lấy color từ Odoo (nếu frontend không truyền lên) ──
+        var color = string.IsNullOrWhiteSpace(req.Color)
+            ? await FetchColorFromOdooAsync(wo)
+            : req.Color.Trim();
+
         var (qty, passQty, ngQty) = await _fqcbpService.RecordScanAsync(
             wo, sn, req.Status,
+            color,
             req.NgCode?.Trim(),
             req.NgReason?.Trim(),
             req.NgDescription?.Trim());
@@ -102,9 +134,12 @@ public class FQCController : Controller
             query = query.Where(x => x.SerialNumber.Contains(filter.SerialNumber.Trim().ToUpper()));
         if (!string.IsNullOrWhiteSpace(filter.Status))
             query = query.Where(x => x.Status == filter.Status);
-        if (!string.IsNullOrWhiteSpace(filter.NgCode))                                       // ← NEW
+        if (!string.IsNullOrWhiteSpace(filter.NgCode))
             query = query.Where(x => x.NgCode != null &&
-                                     x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));     // ← NEW
+                                     x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.Color))
+            query = query.Where(x => x.Color != null &&
+                                     x.Color == filter.Color.Trim());
         if (filter.DateFrom.HasValue)
             query = query.Where(x => x.Timeline >= filter.DateFrom.Value.Date);
         if (filter.DateTo.HasValue)
@@ -145,9 +180,12 @@ public class FQCController : Controller
             query = query.Where(x => x.SerialNumber.Contains(filter.SerialNumber.Trim().ToUpper()));
         if (!string.IsNullOrWhiteSpace(filter.Status))
             query = query.Where(x => x.Status == filter.Status);
-        if (!string.IsNullOrWhiteSpace(filter.NgCode))                                        // ← NEW
+        if (!string.IsNullOrWhiteSpace(filter.NgCode))
             query = query.Where(x => x.NgCode != null &&
-                                     x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));      // ← NEW
+                                     x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.Color))
+            query = query.Where(x => x.Color != null &&
+                                     x.Color == filter.Color.Trim());
         if (filter.DateFrom.HasValue)
             query = query.Where(x => x.Timeline >= filter.DateFrom.Value.Date);
         if (filter.DateTo.HasValue)
@@ -156,13 +194,13 @@ public class FQCController : Controller
         var data = await query.OrderByDescending(x => x.Timeline).ToListAsync();
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine("#,Work Order,Serial Number,Status,NG Code,NG Reason,NG Description,Time (UTC+8)");
+        sb.AppendLine("#,Work Order,Serial Number,Status,Color,NG Code,NG Reason,NG Description,Time (UTC+8)");
         int i = 1;
         foreach (var r in data)
         {
-            var desc = r.NgDescription?.Replace(",", ";") ?? "";
+            var desc   = r.NgDescription?.Replace(",", ";") ?? "";
             var reason = r.NgReason?.Replace(",", ";") ?? "";
-            sb.AppendLine($"{i++},{r.WorkOrder},{r.SerialNumber},{r.Status},{r.NgCode ?? ""},{reason},{desc},{r.Timeline.AddHours(1):dd/MM/yyyy HH:mm:ss}");
+            sb.AppendLine($"{i++},{r.WorkOrder},{r.SerialNumber},{r.Status},{r.Color ?? ""},{r.NgCode ?? ""},{reason},{desc},{r.Timeline.AddHours(1):dd/MM/yyyy HH:mm:ss}");
         }
 
         var bytes = System.Text.Encoding.UTF8.GetPreamble()
@@ -175,7 +213,7 @@ public class FQCController : Controller
     [HttpGet]
     public IActionResult FQCBPR() => View();
 
-    //FQC/reportData  
+    // ── GET /FQC/reportData ───────────────────────────────
     [HttpGet]
     public async Task<IActionResult> reportData([FromQuery] FQCReportFilter filter)
     {
@@ -186,12 +224,16 @@ public class FQCController : Controller
         if (!string.IsNullOrWhiteSpace(filter.NgCode))
             query = query.Where(x => x.NgCode != null &&
                                      x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));
+        // ── Filter by Color ──────────────────────────────
+        if (!string.IsNullOrWhiteSpace(filter.Color))
+            query = query.Where(x => x.Color != null &&
+                                     x.Color == filter.Color.Trim());
         if (filter.DateFrom.HasValue)
             query = query.Where(x => x.Timeline >= filter.DateFrom.Value.Date);
         if (filter.DateTo.HasValue)
             query = query.Where(x => x.Timeline < filter.DateTo.Value.Date.AddDays(1));
 
-        // ── Load tất cả rows (có SerialNumber và NgDescription cho detail table) ──
+        // ── Load tất cả rows ────────────────────────────
         var rows = await query
             .OrderByDescending(x => x.Timeline)
             .Select(x => new
@@ -199,6 +241,7 @@ public class FQCController : Controller
                 x.WorkOrder,
                 x.SerialNumber,
                 x.Status,
+                x.Color,        // ← NEW
                 x.NgCode,
                 x.NgReason,
                 x.NgDescription,
@@ -208,7 +251,7 @@ public class FQCController : Controller
 
         // ── KPI ──────────────────────────────────────────
         int totalPass = rows.Count(x => x.Status == "PASS");
-        int totalNg = rows.Count(x => x.Status == "NG");
+        int totalNg   = rows.Count(x => x.Status == "NG");
 
         // ── Daily trend ───────────────────────────────────
         var dailyTrend = rows
@@ -218,7 +261,7 @@ public class FQCController : Controller
             {
                 date = g.Key.ToString("yyyy-MM-dd"),
                 pass = g.Count(x => x.Status == "PASS"),
-                ng = g.Count(x => x.Status == "NG")
+                ng   = g.Count(x => x.Status == "NG")
             })
             .ToList();
 
@@ -228,8 +271,8 @@ public class FQCController : Controller
             .Select(g => new
             {
                 workOrder = g.Key,
-                ng = g.Count(x => x.Status == "NG"),
-                pass = g.Count(x => x.Status == "PASS"),
+                ng    = g.Count(x => x.Status == "NG"),
+                pass  = g.Count(x => x.Status == "PASS"),
                 total = g.Count()
             })
             .OrderByDescending(x => x.ng)
@@ -271,26 +314,35 @@ public class FQCController : Controller
         foreach (var r in rows.Where(x => x.Status == "NG"))
         {
             int hour = r.Timeline.Hour;
-            int dow = ((int)r.Timeline.DayOfWeek + 6) % 7; // Mon=0
+            int dow  = ((int)r.Timeline.DayOfWeek + 6) % 7;
             if (!heatmap.ContainsKey(hour)) heatmap[hour] = new();
             heatmap[hour].TryGetValue(dow, out int cur);
             heatmap[hour][dow] = cur + 1;
         }
 
-        // ── NG Detail rows (chỉ lấy NG, tối đa 2000 records) ──────────
+        // ── NG Detail rows (tối đa 2000 records) ──────────
         var ngDetailRows = rows
             .Where(x => x.Status == "NG")
             .Take(2000)
             .Select(x => new
             {
-                workOrder = x.WorkOrder,
-                serialNumber = x.SerialNumber,
-                status = x.Status,
-                ngCode = x.NgCode,
-                ngReason = x.NgReason,
+                workOrder     = x.WorkOrder,
+                serialNumber  = x.SerialNumber,
+                status        = x.Status,
+                color         = x.Color,        // ← NEW
+                ngCode        = x.NgCode,
+                ngReason      = x.NgReason,
                 ngDescription = x.NgDescription,
-                timeline = x.Timeline
+                timeline      = x.Timeline
             })
+            .ToList();
+
+        // ── Danh sách màu duy nhất để populate dropdown ──
+        var availableColors = rows
+            .Where(x => !string.IsNullOrWhiteSpace(x.Color))
+            .Select(x => x.Color!)
+            .Distinct()
+            .OrderBy(c => c)
             .ToList();
 
         return Json(new
@@ -298,7 +350,7 @@ public class FQCController : Controller
             totalScanned = rows.Count,
             totalPass,
             totalNg,
-            uniqueWo = rows.Select(x => x.WorkOrder).Distinct().Count(),
+            uniqueWo     = rows.Select(x => x.WorkOrder).Distinct().Count(),
             uniqueNgCode = ngPerCode.Count,
             dailyTrend,
             ngPerWo,
@@ -306,7 +358,8 @@ public class FQCController : Controller
             ngTrendPerWo,
             ngCodePerWo,
             heatmap,
-            ngDetailRows    // ← MỚI: bảng detail NG
+            ngDetailRows,
+            availableColors    // ← NEW: dùng để populate dropdown filter
         });
     }
 
@@ -329,8 +382,6 @@ public class FQCController : Controller
 
         return Ok(new { workOrder = record });
     }
-
- 
 
     [HttpPost]
     public async Task<IActionResult> SendOdooComment([FromBody] OdooCommentRequest req)
@@ -358,6 +409,7 @@ public class ScanRequest
     public string  WorkOrder     { get; set; } = string.Empty;
     public string  SerialNumber  { get; set; } = string.Empty;
     public string  Status        { get; set; } = string.Empty;
+    public string? Color         { get; set; }   // ← NEW (frontend có thể truyền lên để tránh gọi thêm)
     public string? NgCode        { get; set; }
     public string? NgReason      { get; set; }
     public string? NgDescription { get; set; }
@@ -367,6 +419,7 @@ public class FQCReportFilter
 {
     public string?   WorkOrder { get; set; }
     public string?   NgCode    { get; set; }
+    public string?   Color     { get; set; }   // ← NEW
     public DateTime? DateFrom  { get; set; }
     public DateTime? DateTo    { get; set; }
 }
