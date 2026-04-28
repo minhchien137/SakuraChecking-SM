@@ -276,7 +276,9 @@
         border: none; border-radius: 8px; cursor: pointer;
         transition: background 0.15s;
     }
-    .btn-ng-confirm:hover { background: #dc2626; }
+    .btn-ng-confirm:hover    { background: #dc2626; }
+    .btn-ng-confirm:disabled { opacity: 0.4; cursor: not-allowed; background: var(--ng-color); }
+
 
     .ng-hint { font-size: 0.7rem; color: var(--text-tertiary); text-align: right; }
 </style>
@@ -335,7 +337,7 @@
 
         <div class="ng-dialog__actions">
             <button class="btn-ng-skip"    id="btnNgSkip">跳过 / Skip</button>
-            <button class="btn-ng-confirm" id="btnNgConfirm">✕ 确认不良 / Confirm NG</button>
+            <button class="btn-ng-confirm" id="btnNgConfirm" disabled>✕ 确认不良 / Confirm NG</button>
         </div>
         <div class="ng-hint">
             Phím số <kbd class="key">1</kbd>–<kbd class="key">9</kbd> 从列表中选择 / Select from the list &nbsp;·&nbsp;
@@ -486,7 +488,7 @@
     // ── NG state ──────────────────────────────────────────
     let allReasons      = [];
     let filteredReasons = [];
-    let selectedId      = null;   // dùng id (unique) thay vì code để tránh highlight nhầm
+    let selectedId      = null;
     let selectedCode    = null;
     let selectedName    = null;
     let pendingNgWO     = '';
@@ -522,7 +524,7 @@
             btn.dataset.id   = r.id;
             btn.dataset.code = r.code;
             btn.dataset.name = r.name;
-            if (selectedId === r.id) btn.classList.add('selected');  // so sánh theo id
+            if (selectedId === r.id) btn.classList.add('selected');
 
             btn.innerHTML = `
                 ${keyLabel
@@ -555,15 +557,14 @@
         selectedId   = id;
         selectedCode = code;
         selectedName = name;
-        // Chỉ highlight đúng 1 item theo id (unique), không bị nhầm khi code trùng
         ngReasonGrid.querySelectorAll('.ng-reason-btn').forEach(b => {
             b.classList.toggle('selected', Number(b.dataset.id) === id);
         });
-        // Update preview strip
         ngPreviewCode.textContent = code;
         ngPreviewName.textContent = name;
         ngSelectedPreview.classList.add('visible');
         ngDescInput.focus();
+        btnNgConfirm.disabled = false;   // ← bật nút khi đã chọn
     }
 
     function clearSelection() {
@@ -571,13 +572,14 @@
         ngSelectedPreview.classList.remove('visible');
         ngPreviewCode.textContent = '';
         ngPreviewName.textContent = '';
+        btnNgConfirm.disabled = true;    // ← tắt nút khi chưa chọn
     }
 
     // ── Open / close ──────────────────────────────────────
     function openNgDialog(wo, sn) {
         pendingNgWO = wo; pendingNgSN = sn;
         clearSelection();
-        ngDescInput.value = '';
+        ngDescInput.value   = '';
         ngSearchInput.value = '';
         ngDialogSN.textContent = sn;
         renderGrid(allReasons);
@@ -609,7 +611,7 @@
             return;
         }
         if (e.key === 'Enter')  { e.preventDefault(); confirmNg(); return; }
-        if (e.key === 'Escape') { e.preventDefault(); btnNgSkip.click(); return; }
+        if (e.key === 'Escape') { e.preventDefault(); handleSkip(); return; }
         if (e.key === 'Tab' && !e.shiftKey && selectedCode) {
             e.preventDefault(); ngDescInput.focus();
         }
@@ -617,32 +619,36 @@
 
     // ── Confirm / skip ────────────────────────────────────
     async function confirmNg() {
+        if (!selectedCode) return;   // guard: không cho submit nếu chưa chọn
         const wo   = pendingNgWO;
         const sn   = pendingNgSN;
-        const code = selectedCode || null;
-        const name = selectedName || null;
+        const code = selectedCode;
+        const name = selectedName;
         const desc = ngDescInput.value.trim() || null;
         closeNgDialog();
         await submitScan('NG', wo, sn, code, name, desc);
         snInput.focus();
     }
 
-    btnNgConfirm.addEventListener('click', confirmNg);
-
-    btnNgSkip.addEventListener('click', async () => {
-        const wo = pendingNgWO, sn = pendingNgSN;
+    function handleSkip() {
         closeNgDialog();
-        await submitScan('NG', wo, sn, null, null, null);
+        resetSNAndStatus();
+        updateWODisplay(null);
+        updateColorDisplay(null);
+        resetCircle();
         snInput.focus();
-    });
+    }
+
+    btnNgConfirm.addEventListener('click', confirmNg);
+    btnNgSkip.addEventListener('click', handleSkip);
 
     // ── Keyboard in overlay (ngoài search) ───────────────
     ngOverlay.addEventListener('keydown', function (e) {
         if (!ngOverlay.classList.contains('open')) return;
         const activeEl = document.activeElement;
-        if (activeEl === ngSearchInput) return; // search has own handler
+        if (activeEl === ngSearchInput) return;
 
-        if (e.key === 'Escape') { e.preventDefault(); btnNgSkip.click(); return; }
+        if (e.key === 'Escape') { e.preventDefault(); handleSkip(); return; }
         if (e.key === 'Enter' && activeEl !== ngDescInput) { e.preventDefault(); confirmNg(); return; }
 
         const numMap = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'8':7,'9':8};
@@ -658,7 +664,7 @@
 
     ngDescInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); confirmNg(); }
-        if (e.key === 'Escape') { e.preventDefault(); btnNgSkip.click(); }
+        if (e.key === 'Escape') { e.preventDefault(); handleSkip(); }
     });
 
     // ── SN input ──────────────────────────────────────────
@@ -706,8 +712,8 @@
         const v = this.value;
         this.classList.toggle('is-pass', v === 'PASS');
         this.classList.toggle('is-ng',   v === 'NG');
-        if (v === 'PASS') { submitScan('PASS'); }
-        else if (v === 'NG') { triggerNgDialog(); }
+        if (v === 'PASS')      submitScan('PASS');
+        else if (v === 'NG')   triggerNgDialog();
     });
 
     statusInput.addEventListener('keydown', function (e) {
