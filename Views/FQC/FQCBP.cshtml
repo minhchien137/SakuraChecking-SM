@@ -483,7 +483,7 @@
     const ngPreviewCode     = document.getElementById('ngPreviewCode');
     const ngPreviewName     = document.getElementById('ngPreviewName');
 
-    let qty = 0, passQty = 0, ngQty = 0, currentWO = '';
+    let qty = 0, passQty = 0, ngQty = 0, currentWO = '', currentColor = null;
 
     // ── NG state ──────────────────────────────────────────
     let allReasons      = [];
@@ -774,9 +774,10 @@
     async function fetchColor(wo) {
         colorDisplay.classList.add('empty'); colorDisplay.innerHTML = '';
         colorLoading.classList.add('visible');
+        currentColor = null;
         try {
             const res = await fetch(`${pathBase}/api/Odoo/search?productionCode=${encodeURIComponent(wo)}`);
-            if (res.ok) { const d = await res.json(); updateColorDisplay(d.productColor || null); }
+            if (res.ok) { const d = await res.json(); currentColor = d.productColor || null; updateColorDisplay(currentColor); }
             else updateColorDisplay(null);
         } catch { updateColorDisplay(null); }
         finally { colorLoading.classList.remove('visible'); }
@@ -823,6 +824,7 @@
                     workOrder:     wo,
                     serialNumber:  sn,
                     status:        verdictStr,
+                    color:         currentColor ?? null,
                     ngCode:        ngCode        ?? null,
                     ngReason:      ngName        ?? null,
                     ngDescription: ngDescription ?? null

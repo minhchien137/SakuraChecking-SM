@@ -489,7 +489,7 @@
     // ═══════════════════════════════════════════════
     // CONFIG & STATE
     // ═══════════════════════════════════════════════
-    const pathBase = document.querySelector('base')?.href?.replace(/\/$/, '') || '';
+    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
     const PALETTE = {
         ng:'#ef4444', pass:'#22c55e', accent:'#3b82f6',
