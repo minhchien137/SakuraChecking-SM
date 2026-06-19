@@ -37,5 +37,9 @@ namespace ScanCheckSakura.Models
 
         [MaxLength(500)]
         public string? NgDescription { get; set; }
+
+        // Item code lấy từ Odoo sau khi scan NG (dùng để sync SVN_Defect_Record)
+        [MaxLength(200)]
+        public string? Item_code { get; set; }
     }
 }

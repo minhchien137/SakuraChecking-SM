@@ -15,7 +15,9 @@ builder.Services.AddScoped<ICBCPService, CBCPService>();
 builder.Services.AddScoped<ICBCPLogService, CBCPLogService>();
 builder.Services.AddScoped<IFqcbpService, FqcbpService>();
 builder.Services.AddScoped<IFqcOdooService, FqcOdooService>();
+builder.Services.AddScoped<IDefectSyncService, DefectSyncService>();
 builder.Services.AddHttpClient<OdooController>();
+builder.Services.AddHttpClient(); // đảm bảo IHttpClientFactory có sẵn cho DefectSyncService
 
 
 var app = builder.Build();

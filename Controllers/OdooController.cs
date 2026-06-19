@@ -4,6 +4,8 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ScanCheckSakura.Data;
+using Newtonsoft.Json.Linq;
+
 
 
 [ApiController]
@@ -153,6 +155,8 @@ public class OdooController : ControllerBase
     }
 
     private string? ExtractProductColor(string jsonResponse)
+
+
     {
         try
         {
@@ -179,6 +183,43 @@ public class OdooController : ControllerBase
             return null;
         }
     }
+    
+    // Extract Produt Code
+     private string ExtractProductCode(string jsonResponse)
+    {
+        try
+        {
+            var jsonObj = JObject.Parse(jsonResponse);
+            var records = jsonObj["result"]?["records"] as JArray;
+
+            if (records != null && records.Count > 0)
+            {
+                var firstRecord = records[0];
+                var productId = firstRecord["product_id"] as JArray;
+
+                if (productId != null && productId.Count >= 2)
+                {
+                    var productDescription = productId[1]?.ToString();
+                    if (!string.IsNullOrEmpty(productDescription))
+                    {
+                        var match = Regex.Match(productDescription, @"^\[([^\]]+)\]");
+                        if (match.Success)
+                        {
+                            return match.Groups[1].Value;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extracting product code: {ex.Message}");
+            return null;
+        }
+    }
+
 
     // =====================================================================
     // POST /api/odoo/postcomment
@@ -448,7 +489,9 @@ public class OdooController : ControllerBase
     // Get Product from Serial Number
     // =====================================================================
 
+    
 
+   
     [HttpGet("getproductfromserial")]
     public async Task<IActionResult> GetProductFromSerial([FromQuery] string serial)
     {

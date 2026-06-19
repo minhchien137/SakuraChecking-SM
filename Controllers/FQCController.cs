@@ -6,20 +6,22 @@ using ScanCheckSakura.Services;
 
 public class FQCController : Controller
 {
-    private readonly IFqcbpService   _fqcbpService;
-    private readonly IFqcOdooService _fqcOdooService;
+    private readonly IFqcbpService      _fqcbpService;
+    private readonly IFqcOdooService    _fqcOdooService;
+    private readonly IDefectSyncService _defectSyncService;
     private readonly ApplicationDbContext _db;
-    // Inject HttpClientFactory để gọi Odoo lấy color
     private readonly IHttpClientFactory _httpClientFactory;
 
     public FQCController(
-        IFqcbpService fqcbpService,
-        IFqcOdooService fqcOdooService,
+        IFqcbpService      fqcbpService,
+        IFqcOdooService    fqcOdooService,
+        IDefectSyncService defectSyncService,
         ApplicationDbContext db,
         IHttpClientFactory httpClientFactory)
     {
         _fqcbpService      = fqcbpService;
         _fqcOdooService    = fqcOdooService;
+        _defectSyncService = defectSyncService;
         _db                = db;
         _httpClientFactory = httpClientFactory;
     }
@@ -102,6 +104,16 @@ public class FQCController : Controller
             await _fqcOdooService.PostCommentBySerialAsync(sn, commentBody);
         }
         catch { }
+
+        // Đồng bộ Defect Record khi scan NG
+        if (req.Status == "NG" && !string.IsNullOrWhiteSpace(req.NgCode))
+        {
+            try
+            {
+                await _defectSyncService.UpsertDefectAsync(wo, sn, req.NgCode.Trim());
+            }
+            catch { }
+        }
 
         return Json(new { qty, passQty, ngQty });
     }
@@ -381,6 +393,18 @@ public class FQCController : Controller
             return NotFound(new { message = $"Serial '{sn}' not found" });
 
         return Ok(new { workOrder = record });
+    }
+
+    // ── POST /FQC/backfillDefect?date=20260617 ────────────────
+    // Backfill Item_code cho data cũ rồi sync vào SVN_Defect_Record
+    [HttpPost]
+    public async Task<IActionResult> backfillDefect([FromQuery] string date)
+    {
+        if (string.IsNullOrWhiteSpace(date))
+            return BadRequest(new { message = "Thiếu tham số date (yyyyMMdd). VD: ?date=20260617" });
+
+        var result = await _defectSyncService.BackfillAndSyncAsync(date.Trim());
+        return Json(result);
     }
 
     [HttpPost]

@@ -228,3 +228,4 @@ C:\ScanCheckSakura\obj\Debug\net9.0\refint\ScanCheckSakura.dll
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.pdb
 C:\ScanCheckSakura\obj\Debug\net9.0\ScanCheckSakura.genruntimeconfig.cache
 C:\ScanCheckSakura\obj\Debug\net9.0\ref\ScanCheckSakura.dll
+C:\ScanCheckSakura\bin\Debug\net9.0\Newtonsoft.Json.dll
