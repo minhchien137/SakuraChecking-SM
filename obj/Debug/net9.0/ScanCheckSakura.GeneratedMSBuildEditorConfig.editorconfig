@@ -20,61 +20,61 @@ build_property.TargetFrameworkVersion = v9.0
 build_property.EntryPointFilePath = 
 build_property.RootNamespace = ScanCheckSakura
 build_property.RootNamespace = ScanCheckSakura
-build_property.ProjectDir = /Users/pm/Coldzy/ScanCheckSakura/
+build_property.ProjectDir = D:\SakuraChecking-SM\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /Users/pm/Coldzy/ScanCheckSakura
+build_property.MSBuildProjectDirectory = D:\SakuraChecking-SM
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 9.0
 build_property.EnableCodeStyleSeverity = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/FGCheck/CBCP.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRkdDaGVjay9DQkNQLmNzaHRtbA==
+[D:/SakuraChecking-SM/Views/FGCheck/CBCP.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRkdDaGVja1xDQkNQLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/FGCheck/CBCPLog.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRkdDaGVjay9DQkNQTG9nLmNzaHRtbA==
+[D:/SakuraChecking-SM/Views/FGCheck/CBCPLog.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRkdDaGVja1xDQkNQTG9nLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/FQC/FQCBP.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRlFDL0ZRQ0JQLmNzaHRtbA==
+[D:/SakuraChecking-SM/Views/FQC/FQCBP.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRlFDXEZRQ0JQLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/FQC/FQCBPH.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRlFDL0ZRQ0JQSC5jc2h0bWw=
+[D:/SakuraChecking-SM/Views/FQC/FQCBPH.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRlFDXEZRQ0JQSC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/FQC/FQCBPR.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRlFDL0ZRQ0JQUi5jc2h0bWw=
+[D:/SakuraChecking-SM/Views/FQC/FQCBPR.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRlFDXEZRQ0JQUi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/Home/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
+[D:/SakuraChecking-SM/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/Home/Privacy.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9Qcml2YWN5LmNzaHRtbA==
+[D:/SakuraChecking-SM/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/Shared/Error.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
+[D:/SakuraChecking-SM/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/Shared/_ValidationScriptsPartial.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+[D:/SakuraChecking-SM/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/_ViewImports.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+[D:/SakuraChecking-SM/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/_ViewStart.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
+[D:/SakuraChecking-SM/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/pm/Coldzy/ScanCheckSakura/Views/Shared/_Layout.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = b-klmnslk4gr
+[D:/SakuraChecking-SM/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-von9rrmijg

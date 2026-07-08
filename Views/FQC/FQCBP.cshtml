@@ -453,6 +453,21 @@
 
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
+    // ── Local color mapping (Serial Number chars 6-7, i.e. substring(5,2)) ──
+    // Format: RM15A + Variant(2) + Year(1) + Day(3) + Sequential(4)
+    // Example: RM15A[00]50500001 → "00" → Blue
+    const SERIAL_VARIANT_COLOR_MAP = {
+        '00': 'Blue',
+        '01': 'Pink',
+        '02': 'Green',
+    };
+    function getColorFromSerial(serialNumber) {
+        const sn = (serialNumber || '').trim().toUpperCase();
+        if (sn.length < 7) return null;
+        const variantCode = sn.substring(5, 7);
+        return SERIAL_VARIANT_COLOR_MAP[variantCode] || null;
+    }
+
     const woInput        = document.getElementById('WorkOrder');
     const snInput        = document.getElementById('SerialNumber');
     const statusInput    = document.getElementById('StatusInput');
@@ -679,6 +694,9 @@
             if (!validateSN()) return;
             const sn = snInput.value.trim();
 
+            currentColor = getColorFromSerial(sn);
+            updateColorDisplay(currentColor);
+
             const wo = await fetchWOFromSerial(sn);
             if (!wo) {
                 showToast('未找到工单 / WO Not Found',
@@ -758,7 +776,7 @@
             const wo   = data.workOrder;
             if (!wo) throw new Error();
             currentWO = wo; woInput.value = wo;
-            updateWODisplay(wo); fetchColor(wo); fetchQty(wo);
+            updateWODisplay(wo); fetchQty(wo);
             woStatusText.textContent = `✓ ${wo}`;
             woStatusText.className   = 'wo-status-text found';
             return wo;
@@ -769,18 +787,6 @@
             woStatusText.className   = 'wo-status-text notfound';
             return null;
         } finally { woSpinner.classList.remove('visible'); }
-    }
-
-    async function fetchColor(wo) {
-        colorDisplay.classList.add('empty'); colorDisplay.innerHTML = '';
-        colorLoading.classList.add('visible');
-        currentColor = null;
-        try {
-            const res = await fetch(`${pathBase}/api/Odoo/search?productionCode=${encodeURIComponent(wo)}`);
-            if (res.ok) { const d = await res.json(); currentColor = d.productColor || null; updateColorDisplay(currentColor); }
-            else updateColorDisplay(null);
-        } catch { updateColorDisplay(null); }
-        finally { colorLoading.classList.remove('visible'); }
     }
 
     async function fetchQty(wo) {

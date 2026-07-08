@@ -5040,19 +5040,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/pm/.nuget/packages/": {}
+    "C:\\Users\\Minh Chien\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/pm/Coldzy/ScanCheckSakura/ScanCheckSakura.csproj",
+      "projectUniqueName": "D:\\SakuraChecking-SM\\ScanCheckSakura.csproj",
       "projectName": "ScanCheckSakura",
-      "projectPath": "/Users/pm/Coldzy/ScanCheckSakura/ScanCheckSakura.csproj",
-      "packagesPath": "/Users/pm/.nuget/packages/",
-      "outputPath": "/Users/pm/Coldzy/ScanCheckSakura/obj/",
+      "projectPath": "D:\\SakuraChecking-SM\\ScanCheckSakura.csproj",
+      "packagesPath": "C:\\Users\\Minh Chien\\.nuget\\packages\\",
+      "outputPath": "D:\\SakuraChecking-SM\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/pm/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Minh Chien\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -5114,6 +5114,24 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[9.0.16, 9.0.16]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[9.0.16, 9.0.16]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[9.0.16, 9.0.16]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[9.0.16, 9.0.16]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -5122,7 +5140,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.301/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

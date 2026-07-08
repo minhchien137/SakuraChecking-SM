@@ -395,6 +395,34 @@ public class FQCController : Controller
         return Ok(new { workOrder = record });
     }
 
+    // ── GET /FQC/getColorFromSerial?serial=RM15A0050500001 ────
+    // Test endpoint: xác định màu sản phẩm cục bộ từ Serial Number,
+    // KHÔNG gọi Odoo. Cùng logic với getColorFromSerial() trong FQCBP.cshtml.
+    // Format: RM15A + Variant(2) + Year(1) + Day(3) + Sequential(4)
+    //         01234    56           7          89A      BCDE
+    private static readonly Dictionary<string, string> _serialVariantColorMap = new()
+    {
+        { "00", "Blue"  },
+        { "01", "Pink"  },
+        { "02", "Green" },
+    };
+
+    [HttpGet]
+    public IActionResult getColorFromSerial([FromQuery] string serial)
+    {
+        if (string.IsNullOrWhiteSpace(serial))
+            return BadRequest(new { message = "serial is required" });
+
+        var sn = serial.Trim().ToUpper();
+        if (sn.Length < 7)
+            return Ok(new { serial = sn, variantCode = (string?)null, color = (string?)null });
+
+        var variantCode = sn.Substring(5, 2);
+        _serialVariantColorMap.TryGetValue(variantCode, out var color);
+
+        return Ok(new { serial = sn, variantCode, color });
+    }
+
     // ── POST /FQC/backfillDefect?date=20260617 ────────────────
     // Backfill Item_code cho data cũ rồi sync vào SVN_Defect_Record
     [HttpPost]
