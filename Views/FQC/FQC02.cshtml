@@ -1,0 +1,988 @@
+@{
+    ViewData["Title"] = "FQC02";
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow:wght@600;700;800&display=swap');
+
+    :root {
+        --red:        #C8102E;
+        --red-dark:   #9B0B22;
+        --red-mid:    #E63950;
+        --red-light:  #FFE5E9;
+        --red-xlight: #FFF5F6;
+        --white:      #FFFFFF;
+        --gray-50:    #F9FAFB;
+        --gray-100:   #F3F4F6;
+        --gray-200:   #E5E7EB;
+        --gray-400:   #9CA3AF;
+        --gray-500:   #6B7280;
+        --gray-600:   #4B5563;
+        --gray-700:   #374151;
+        --gray-900:   #111827;
+        --success:    #059669;
+        --danger:     #DC2626;
+        --shadow-sm:  0 1px 3px rgba(200,16,46,0.08);
+        --shadow-md:  0 4px 20px rgba(200,16,46,0.12);
+        --shadow-lg:  0 8px 40px rgba(200,16,46,0.18);
+
+        /* alias sang tên biến cũ để các rule bên dưới không phải viết lại toàn bộ */
+        --bg-primary:     var(--gray-50);
+        --bg-secondary:   var(--white);
+        --bg-tertiary:    var(--gray-50);
+        --text-primary:   var(--gray-900);
+        --text-secondary: var(--gray-600);
+        --text-tertiary:  var(--gray-500);
+        --border:         var(--gray-200);
+        --accent:         var(--red);
+        --pass-color:     var(--success);
+        --ng-color:       var(--danger);
+        --radius:         14px;
+    }
+
+    body {
+        background: var(--bg-primary); color: var(--text-primary);
+        background-image:
+            radial-gradient(ellipse at 10% 30%, rgba(200,16,46,0.05) 0%, transparent 55%),
+            radial-gradient(ellipse at 90% 70%, rgba(230,57,80,0.04) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+
+    .fqc-wrap {
+        max-width: 960px; margin: 0 auto;
+        padding: 2.5rem 2rem 4rem;
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    .fqc-header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 1.75rem; border-bottom: 1px dashed var(--border); }
+    .fqc-header h1 { font-family: 'Barlow', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -0.3px; margin: 0 0 0.5rem; color: var(--red-dark); }
+    .header-accent { width: 40px; height: 4px; margin: 10px auto 0; border-radius: 2px; background: linear-gradient(90deg, var(--red-dark), var(--red-mid)); }
+
+    .btn-history {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        margin-top: 0.75rem; padding: 7px 16px;
+        font-size: 0.82rem; font-weight: 600;
+        background: var(--white); color: var(--gray-500);
+        border: 1.5px solid var(--gray-200); border-radius: 10px;
+        text-decoration: none;
+        transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+    .btn-history:hover { color: var(--red); border-color: var(--red); background: var(--red-xlight); }
+
+    .fqc-body { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0 3rem; align-items: start; }
+    @@media (max-width: 768px) { .fqc-body { grid-template-columns: 1fr; gap: 2.5rem 0; } .fqc-divider { display: none; } }
+    .fqc-divider { width: 1px; align-self: stretch; background: var(--border); }
+
+    .left-panel { display: flex; flex-direction: column; gap: 1.5rem; background: var(--white); border: 1px solid rgba(200,16,46,0.07); border-radius: 18px; padding: 1.75rem; box-shadow: var(--shadow-md); }
+    .field-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .field-group label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gray-700); }
+    .field-group input {
+        padding: 13px 15px; font-size: 1.1rem; font-family: 'Courier New', monospace;
+        background: var(--white); border: 1.5px solid var(--gray-200);
+        border-radius: 10px; color: var(--text-primary);
+        outline: none; width: 100%; min-height: 46px; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-group input:hover { border-color: var(--red-mid); }
+    .field-group input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(200,16,46,0.1); background: var(--white); }
+    .field-group input[readonly] { cursor: not-allowed; color: var(--gray-500); background: var(--gray-50); border-style: dashed; }
+    .field-group input[readonly]:focus { border-color: var(--gray-200); box-shadow: none; background: var(--gray-50); }
+
+    .wo-loading-wrap { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--gray-500); min-height: 1.2rem; }
+    .wo-spinner { display: none; width: 12px; height: 12px; border: 2px solid var(--gray-200); border-top-color: var(--red); border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0; }
+    .wo-spinner.visible { display: inline-block; }
+    .wo-status-text { font-size: 0.78rem; }
+    .wo-status-text.found    { color: var(--success); }
+    .wo-status-text.notfound { color: var(--danger); }
+
+    #StatusInput.is-pass { border-color: var(--success); box-shadow: 0 0 0 3px rgba(5,150,105,0.15); color: var(--success); }
+    #StatusInput.is-ng   { border-color: var(--danger);  box-shadow: 0 0 0 3px rgba(220,38,38,0.15);  color: var(--danger); }
+
+    .field-separator { height: 1px; background: var(--gray-200); margin: 0.25rem 0; }
+
+    .keyboard-hint { display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem; font-size: 0.75rem; color: var(--gray-500); }
+    .keyboard-hint .hint-item { display: flex; align-items: center; gap: 0.35rem; }
+    kbd.key {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 22px; height: 22px; padding: 0 5px;
+        background: var(--gray-100); border: 1px solid var(--gray-200);
+        border-bottom: 2px solid var(--gray-200); border-radius: 4px;
+        font-size: 0.72rem; font-family: system-ui, sans-serif;
+        font-weight: 600; color: var(--gray-600); line-height: 1;
+    }
+
+    .right-panel { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-top: 0.5rem; }
+    .wo-display { text-align: center; width: 100%; }
+    .wo-display__label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 0.4rem; }
+    .wo-display__value { font-size: 1.4rem; font-weight: 700; font-family: 'Courier New', monospace; color: var(--gray-900); min-height: 2rem; letter-spacing: 0.04em; }
+    .wo-display__value.empty { color: var(--gray-400); font-size: 1rem; font-weight: 400; }
+
+    .color-loading { display: none; width: 14px; height: 14px; border: 2px solid var(--gray-200); border-top-color: var(--red); border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
+    .color-loading.visible { display: inline-block; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .qty-card { background: var(--white); border: 1px solid rgba(200,16,46,0.07); border-radius: 14px; padding: 1rem 1.5rem; width: 100%; display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm); }
+    .qty-main { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; border-right: 1px dashed var(--gray-200); padding-right: 1rem; }
+    .qty-card__label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 0.3rem; }
+    .qty-card__value { font-family: 'Barlow', 'Courier New', monospace; font-size: 2.8rem; font-weight: 800; line-height: 1; color: var(--red); transition: transform 0.2s; }
+    .qty-card__value.bump { transform: scale(1.2); }
+    .qty-detail { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; padding-left: 0.5rem; }
+    .qty-detail__row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .qty-detail__label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; }
+    .qty-detail__label.pass { color: var(--success); }
+    .qty-detail__label.ng   { color: var(--danger); }
+    .qty-detail__val { font-size: 1.2rem; font-weight: 700; font-family: 'Courier New', monospace; min-width: 2rem; text-align: right; }
+    .qty-detail__val.pass { color: var(--success); }
+    .qty-detail__val.ng   { color: var(--danger); }
+
+    .circle-wrap  { position: relative; width: 180px; height: 180px; }
+    .circle-bg    { fill: none; stroke: var(--gray-200); stroke-width: 8; }
+    .circle-ring  { fill: none; stroke-width: 8; stroke-linecap: round; transform-origin: 50% 50%; transform: rotate(-90deg); stroke-dasharray: 503; stroke-dashoffset: 503; stroke: var(--gray-200); transition: stroke-dashoffset 0.3s ease, stroke 0.2s ease; }
+    .circle-ring.pass { stroke: var(--success); stroke-dashoffset: 0; }
+    .circle-ring.ng   { stroke: var(--danger);  stroke-dashoffset: 0; }
+    .circle-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+    .circle-verdict { font-family: 'Barlow', sans-serif; font-size: 2.6rem; font-weight: 800; line-height: 1; color: var(--gray-400); transition: color 0.1s; }
+    .circle-verdict.pass { color: var(--success); }
+    .circle-verdict.ng   { color: var(--danger); }
+    .circle-sub { font-size: 0.9rem; color: var(--gray-600); text-align: center; transition: color 0.1s; }
+    .circle-sub.pass { color: var(--success); }
+    .circle-sub.ng   { color: var(--danger); }
+
+    @@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+    /* ══════════════════════════════════════════
+       NG DIALOG
+    ══════════════════════════════════════════ */
+    .ng-overlay {
+        display: none; position: fixed; inset: 0; z-index: 10000;
+        background: rgba(60,0,10,0.45);
+        align-items: center; justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .ng-overlay.open { display: flex; }
+
+    .ng-dialog {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 0 0 1.25rem;
+        width: min(640px, 96vw);
+        box-shadow: var(--shadow-lg);
+        animation: dialogIn 0.18s cubic-bezier(0.34,1.56,0.64,1);
+        display: flex; flex-direction: column; gap: 0;
+        overflow: hidden;
+    }
+    @@keyframes dialogIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    /* Banner header đỏ gradient — theo pattern card header của design system */
+    .ng-dialog__header {
+        display: flex; align-items: center; gap: 0.6rem;
+        margin: 0; padding: 1.1rem 1.75rem;
+        background: linear-gradient(135deg, var(--red-dark) 0%, var(--red-mid) 100%);
+        position: relative; overflow: hidden;
+    }
+    .ng-dialog__header::after {
+        content: ''; position: absolute; top: -30px; right: -30px;
+        width: 100px; height: 100px; border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+    }
+    .ng-dialog__icon {
+        font-size: 1.1rem; color: #fff;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,0.18);
+        display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0; position: relative; z-index: 1;
+    }
+    .ng-dialog__title { font-size: 1.02rem; font-weight: 700; color: #fff; position: relative; z-index: 1; }
+    .ng-dialog__sn    { font-size: 0.78rem; color: rgba(255,255,255,0.85); font-family: 'Courier New', monospace; margin-left: auto; position: relative; z-index: 1; }
+
+    .ng-dialog > .ng-search-wrap,
+    .ng-dialog > .ng-dialog__section-label,
+    .ng-dialog > .ng-reason-grid,
+    .ng-dialog > .ng-selected-preview,
+    .ng-dialog > .ng-desc-input,
+    .ng-dialog > .ng-dialog__actions,
+    .ng-dialog > .ng-hint { margin-left: 1.75rem; margin-right: 1.75rem; }
+    .ng-dialog > .ng-search-wrap { margin-top: 1.25rem; }
+
+    /* Search box */
+    .ng-search-wrap { margin-bottom: 0.75rem; position: relative; }
+    .ng-search-input {
+        width: 100%; padding: 9px 13px 9px 36px;
+        font-size: 0.875rem; font-family: inherit;
+        background: var(--gray-50); border: 1.5px solid var(--gray-200);
+        border-radius: 10px; color: var(--text-primary);
+        outline: none; transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    .ng-search-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
+    .ng-search-input::placeholder { color: var(--gray-400); }
+    .ng-search-icon {
+        position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+        font-size: 0.9rem; color: var(--gray-400); pointer-events: none;
+    }
+
+    .ng-dialog__section-label {
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--gray-500);
+        margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .ng-count-badge {
+        font-size: 0.68rem; font-weight: 600; font-variant-numeric: tabular-nums;
+        background: var(--red-xlight); border: 1px solid var(--red-light);
+        border-radius: 20px; padding: 1px 7px; color: var(--red-dark);
+        text-transform: none; letter-spacing: 0;
+    }
+
+    /* Reason grid – 2 cols */
+    .ng-reason-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.45rem;
+        margin-bottom: 1rem;
+        max-height: 260px;
+        overflow-y: auto;
+        padding-right: 2px;
+    }
+    .ng-reason-grid::-webkit-scrollbar { width: 5px; }
+    .ng-reason-grid::-webkit-scrollbar-track { background: transparent; }
+    .ng-reason-grid::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+
+    /* ── Reason button ── */
+    .ng-reason-btn {
+        display: flex; align-items: flex-start; gap: 0.5rem;
+        padding: 0.55rem 0.7rem;
+        background: var(--gray-50); border: 1.5px solid var(--gray-200);
+        border-radius: 9px; cursor: pointer; text-align: left;
+        transition: border-color 0.15s, background 0.15s;
+        font-family: inherit;
+    }
+    .ng-reason-btn:hover    { border-color: var(--danger); background: var(--red-xlight); }
+    .ng-reason-btn.selected { border-color: var(--danger); background: var(--red-light); }
+
+    /* Keyboard shortcut key */
+    .ng-reason-btn__key {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 20px; height: 20px; flex-shrink: 0;
+        background: var(--white); border: 1px solid var(--gray-200);
+        border-bottom: 2px solid var(--gray-200); border-radius: 4px;
+        font-size: 0.68rem; font-weight: 700; color: var(--gray-600);
+        font-family: system-ui; margin-top: 2px;
+    }
+    .ng-reason-btn.selected .ng-reason-btn__key { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+    /* Content area: code badge + name */
+    .ng-reason-btn__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+    /* CODE badge – prominent pill */
+    .ng-reason-btn__code-badge {
+        display: inline-flex; align-items: center;
+        padding: 1px 7px; border-radius: 4px;
+        background: var(--red-light); border: 1px solid rgba(200,16,46,0.28);
+        font-family: 'Courier New', monospace; font-size: 0.72rem;
+        font-weight: 800; letter-spacing: 0.06em; color: var(--danger);
+        line-height: 1.5; white-space: nowrap; align-self: flex-start;
+    }
+    .ng-reason-btn.selected .ng-reason-btn__code-badge {
+        background: #ffd3da; border-color: rgba(220,38,38,0.6);
+    }
+
+    .ng-reason-btn__name {
+        font-size: 0.8rem; color: var(--text-primary); line-height: 1.35;
+        word-break: break-word;
+    }
+    .ng-reason-btn.selected .ng-reason-btn__name { color: var(--text-primary); font-weight: 600; }
+
+    .ng-reason-empty   { grid-column: 1/-1; text-align: center; color: var(--gray-400); font-size: 0.82rem; padding: 1.5rem 0; }
+    .ng-reason-loading { grid-column: 1/-1; text-align: center; color: var(--gray-400); font-size: 0.82rem; padding: 1.5rem 0; }
+
+    /* Selected preview strip */
+    .ng-selected-preview {
+        display: none; align-items: center; gap: 0.5rem;
+        padding: 0.5rem 0.75rem; margin-bottom: 0.75rem;
+        background: var(--red-xlight); border: 1px solid var(--red-light);
+        border-radius: 9px; font-size: 0.82rem;
+    }
+    .ng-selected-preview.visible { display: flex; }
+    .ng-selected-preview__label { color: var(--gray-500); font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .ng-selected-preview__code  { font-family: 'Courier New', monospace; font-weight: 800; font-size: 0.82rem; color: var(--danger); white-space: nowrap; }
+    .ng-selected-preview__sep   { color: var(--gray-400); }
+    .ng-selected-preview__name  { color: var(--text-primary); font-weight: 500; }
+
+    /* Description */
+    .ng-desc-input {
+        width: 100%; min-height: 60px; resize: vertical;
+        padding: 9px 12px; font-size: 0.875rem; font-family: inherit;
+        background: var(--gray-50); border: 1.5px solid var(--gray-200);
+        border-radius: 10px; color: var(--text-primary);
+        outline: none; transition: border-color 0.2s;
+        margin-bottom: 1rem; box-sizing: border-box;
+    }
+    .ng-desc-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
+    .ng-desc-input::placeholder { color: var(--gray-400); }
+
+    /* Actions */
+    .ng-dialog__actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-bottom: 0.6rem; }
+    .btn-ng-skip {
+        padding: 9px 18px; font-size: 0.875rem; font-weight: 600;
+        background: var(--white); color: var(--gray-500);
+        border: 1.5px solid var(--gray-200); border-radius: 10px;
+        cursor: pointer; transition: color 0.15s, border-color 0.15s;
+        min-height: 42px;
+    }
+    .btn-ng-skip:hover { color: var(--text-primary); border-color: var(--gray-400); }
+    .btn-ng-confirm {
+        padding: 9px 22px; font-size: 0.875rem; font-weight: 700;
+        background: var(--danger); color: #fff;
+        border: none; border-radius: 10px; cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+        min-height: 42px;
+        box-shadow: 0 4px 14px rgba(220,38,38,0.3);
+    }
+    .btn-ng-confirm:hover    { background: #b91c1c; transform: translateY(-1px); }
+    .btn-ng-confirm:disabled { opacity: 0.4; cursor: not-allowed; background: var(--danger); transform: none; }
+
+
+    .ng-hint { font-size: 0.7rem; color: var(--gray-400); text-align: right; }
+</style>
+
+<!-- Toast -->
+<div id="toastAlert" style="display:none;position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:9999;background:#ffffff;border:1px solid #DC2626;border-left:4px solid #DC2626;border-radius:12px;padding:14px 20px;min-width:300px;max-width:460px;box-shadow:0 8px 32px rgba(200,16,46,0.18);align-items:center;gap:12px;color:#374151;">
+    <span style="font-size:1.3rem;">&#9888;&#65039;</span>
+    <div>
+        <div id="toastTitle" style="font-weight:700;color:#DC2626;font-size:0.88rem;"></div>
+        <div id="toastMsg"   style="color:#374151;font-size:0.8rem;margin-top:3px;"></div>
+    </div>
+</div>
+
+<!-- NG Reason Dialog -->
+<div class="ng-overlay" id="ngOverlay">
+    <div class="ng-dialog" role="dialog" aria-modal="true">
+
+        <div class="ng-dialog__header">
+            <span class="ng-dialog__icon">✕</span>
+            <span class="ng-dialog__title" data-i18n="ngDialogTitle">NG — 选择不良代码</span>
+            <span class="ng-dialog__sn" id="ngDialogSN"></span>
+        </div>
+
+        <!-- Search -->
+        <div class="ng-search-wrap">
+            <span class="ng-search-icon">🔍</span>
+            <input type="text" class="ng-search-input" id="ngSearchInput"
+                   data-i18n-placeholder="ngSearchPlaceholder" placeholder="按代码或名称搜索..."
+                   autocomplete="off" />
+        </div>
+
+        <div class="ng-dialog__section-label">
+            <span data-i18n="ngSectionDefectCode">不良代码</span>
+            <span class="ng-count-badge" id="ngCountBadge"></span>
+        </div>
+
+        <div class="ng-reason-grid" id="ngReasonGrid">
+            <div class="ng-reason-loading" data-i18n="ngReasonLoading">正在加载…</div>
+        </div>
+
+        <!-- Selected preview strip -->
+        <div class="ng-selected-preview" id="ngSelectedPreview">
+            <span class="ng-selected-preview__label" data-i18n="ngSelectedLabel">已选择:</span>
+            <span class="ng-selected-preview__code"  id="ngPreviewCode"></span>
+            <span class="ng-selected-preview__sep">—</span>
+            <span class="ng-selected-preview__name"  id="ngPreviewName"></span>
+        </div>
+
+        <div class="ng-dialog__section-label" style="margin-top:0.25rem;">
+            <span data-i18n="ngSectionDescription">描述</span>
+            <span style="font-weight:400;color:var(--text-tertiary);text-transform:none;letter-spacing:0" data-i18n="ngDescOptional">（可选）</span>
+        </div>
+        <textarea class="ng-desc-input" id="ngDescInput"
+                  data-i18n-placeholder="ngDescPlaceholder" placeholder="请输入更多描述..."
+                  rows="2"></textarea>
+
+        <div class="ng-dialog__actions">
+            <button class="btn-ng-skip"    id="btnNgSkip" data-i18n="btnSkip">跳过</button>
+            <button class="btn-ng-confirm" id="btnNgConfirm" disabled data-i18n="btnConfirmNg">✕ 确认不良</button>
+        </div>
+        <div class="ng-hint">
+            <span data-i18n="ngHintNumberKeys">数字键</span> <kbd class="key">1</kbd>–<kbd class="key">9</kbd> <span data-i18n="ngHintSelect">从列表中选择</span> &nbsp;·&nbsp;
+            <kbd class="key" data-i18n="ngHintEnter">回车</kbd> <span data-i18n="ngHintConfirm">确认</span> &nbsp;·&nbsp;
+            <kbd class="key" data-i18n="ngHintEsc">退出</kbd> <span data-i18n="ngHintSkipLower">跳过</span>
+        </div>
+
+    </div>
+</div>
+
+<div class="fqc-wrap">
+
+    <div class="fqc-header">
+        <h1>FQC02</h1>
+        <div class="header-accent"></div>
+    </div>
+
+    <div class="fqc-body">
+        <div class="left-panel">
+
+            @Html.AntiForgeryToken()
+
+            <div class="field-group">
+                <label for="WorkOrder" data-i18n="labelWorkOrder">工单</label>
+                <input type="text" id="WorkOrder" data-i18n-placeholder="woAutoFillPlaceholder" placeholder="自动填充"
+                       style="text-transform:uppercase;" readonly autocomplete="off" />
+                <div class="wo-loading-wrap">
+                    <span class="wo-spinner" id="woSpinner"></span>
+                    <span class="wo-status-text" id="woStatusText"></span>
+                </div>
+            </div>
+
+            <div class="field-separator"></div>
+
+            <div class="field-group">
+                <label for="SerialNumber" data-i18n="labelSerialNumber">序列号</label>
+                <input type="text" id="SerialNumber" data-i18n-placeholder="snPlaceholder" placeholder="请输入序列号"
+                       maxlength="15" style="text-transform:uppercase;" autocomplete="off" />
+                <span id="snErrorMsg" data-i18n="snErrorMsg" style="display:none;color:#ef4444;font-size:0.8rem;margin-top:0.25rem;">
+                    ⚠ 序列号无效 — 必须为15位字符
+                </span>
+            </div>
+
+            <div class="field-group">
+                <label for="StatusInput" data-i18n="labelStatus">状态</label>
+                <input type="text" id="StatusInput" data-i18n-placeholder="statusPlaceholder" placeholder="扫描状态"
+                       maxlength="4" style="text-transform:uppercase;" autocomplete="off" />
+                <span id="statusErrorMsg" data-i18n="statusErrorMsg" style="display:none;color:#ef4444;font-size:0.8rem;margin-top:0.25rem;">
+                    ⚠ 状态无效 — 必须为 PASS 或 NG
+                </span>
+            </div>
+
+            <div class="keyboard-hint">
+                <div class="hint-item"><kbd class="key">↵</kbd><span data-i18n="hintNextField">Next field</span></div>
+                <div class="hint-item"><kbd class="key">Esc</kbd><span data-i18n="hintClearReset">Clear &amp; reset</span></div>
+            </div>
+
+        </div>
+
+        <div class="fqc-divider"></div>
+
+        <div class="right-panel">
+
+            <div class="wo-display">
+                <div class="wo-display__label" data-i18n="labelWorkOrder">工单</div>
+                <div class="wo-display__value empty" id="woDisplayValue" data-i18n="woNotEntered">未输入</div>
+            </div>
+
+            <div class="wo-display">
+                <div class="wo-display__label" data-i18n="labelColor">Color</div>
+                <div class="wo-display__value empty" id="colorDisplayValue">—</div>
+                <span class="color-loading" id="colorLoading"></span>
+            </div>
+
+            <div class="qty-card">
+                <div class="qty-main">
+                    <div class="qty-card__label" data-i18n="labelQtyInspection">Qty Inspection</div>
+                    <div class="qty-card__value" id="qtyValue">0</div>
+                </div>
+                <div class="qty-detail">
+                    <div class="qty-detail__row">
+                        <span class="qty-detail__label pass">✓ PASS</span>
+                        <span class="qty-detail__val pass" id="passQtyValue">0</span>
+                    </div>
+                    <div class="qty-detail__row">
+                        <span class="qty-detail__label ng">✕ NG</span>
+                        <span class="qty-detail__val ng" id="ngQtyValue">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="circle-wrap">
+                <svg width="180" height="180" viewBox="0 0 180 180">
+                    <circle class="circle-bg"   cx="90" cy="90" r="80" />
+                    <circle class="circle-ring" id="circleRing" cx="90" cy="90" r="80" />
+                </svg>
+                <div class="circle-inner">
+                    <span class="circle-verdict" id="circleVerdict">—</span>
+                    <span class="circle-sub"     id="circleSub" data-i18n="circleNotScanned">未扫描</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    'use strict';
+
+    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+    const STATION  = 'FQC02';
+
+    // ── Local color mapping (Serial Number chars 6-7, i.e. substring(5,2)) ──
+    // Format: RM15A + Variant(2) + Year(1) + Day(3) + Sequential(4)
+    // Example: RM15A[00]50500001 → "00" → Blue
+    const SERIAL_VARIANT_COLOR_MAP = {
+        '00': 'Blue',
+        '01': 'Pink',
+        '02': 'Green',
+    };
+    function getColorFromSerial(serialNumber) {
+        const sn = (serialNumber || '').trim().toUpperCase();
+        if (sn.length < 7) return null;
+        const variantCode = sn.substring(5, 7);
+        return SERIAL_VARIANT_COLOR_MAP[variantCode] || null;
+    }
+
+    const woInput        = document.getElementById('WorkOrder');
+    const snInput        = document.getElementById('SerialNumber');
+    const statusInput    = document.getElementById('StatusInput');
+    const woSpinner      = document.getElementById('woSpinner');
+    const woStatusText   = document.getElementById('woStatusText');
+    const woDisplay      = document.getElementById('woDisplayValue');
+    const colorDisplay   = document.getElementById('colorDisplayValue');
+    const colorLoading   = document.getElementById('colorLoading');
+    const qtyValue       = document.getElementById('qtyValue');
+    const passQtyValue   = document.getElementById('passQtyValue');
+    const ngQtyValue     = document.getElementById('ngQtyValue');
+    const ring           = document.getElementById('circleRing');
+    const verdict        = document.getElementById('circleVerdict');
+    const sub            = document.getElementById('circleSub');
+    const snErrorMsg     = document.getElementById('snErrorMsg');
+    const statusErrorMsg = document.getElementById('statusErrorMsg');
+
+    // ── NG Dialog ─────────────────────────────────────────
+    const ngOverlay         = document.getElementById('ngOverlay');
+    const ngReasonGrid      = document.getElementById('ngReasonGrid');
+    const ngSearchInput     = document.getElementById('ngSearchInput');
+    const ngDescInput       = document.getElementById('ngDescInput');
+    const btnNgConfirm      = document.getElementById('btnNgConfirm');
+    const btnNgSkip         = document.getElementById('btnNgSkip');
+    const ngDialogSN        = document.getElementById('ngDialogSN');
+    const ngCountBadge      = document.getElementById('ngCountBadge');
+    const ngSelectedPreview = document.getElementById('ngSelectedPreview');
+    const ngPreviewCode     = document.getElementById('ngPreviewCode');
+    const ngPreviewName     = document.getElementById('ngPreviewName');
+
+    let qty = 0, passQty = 0, ngQty = 0, currentWO = '', currentColor = null;
+
+    // ── NG state ──────────────────────────────────────────
+    let allReasons      = [];
+    let filteredReasons = [];
+    let selectedId      = null;
+    let selectedCode    = null;
+    let selectedName    = null;
+    let pendingNgWO     = '';
+    let pendingNgSN     = '';
+
+    snInput.focus();
+
+    // Pre-load reasons
+    loadNgReasons();
+    async function loadNgReasons() {
+        try {
+            const res = await fetch(`${pathBase}/FQC/ngReasons`);
+            if (res.ok) allReasons = await res.json();
+        } catch { }
+    }
+
+    // Khi đổi ngôn ngữ mà dialog NG đang mở, render lại badge/empty-state theo ngôn ngữ mới
+    document.addEventListener('fqc-lang-changed', function () {
+        if (ngOverlay.classList.contains('open')) renderGrid(filteredReasons);
+    });
+
+    // ── Render grid ───────────────────────────────────────
+    function renderGrid(list) {
+        filteredReasons = list;
+        ngCountBadge.textContent = `${list.length} ${fqcI18n.t('ngSectionDefectCode')}`;
+
+        if (list.length === 0) {
+            ngReasonGrid.innerHTML = `<div class="ng-reason-empty">${fqcI18n.t('ngReasonEmpty')}</div>`;
+            return;
+        }
+
+        ngReasonGrid.innerHTML = '';
+        list.forEach((r, idx) => {
+            const keyLabel = idx < 9 ? String(idx + 1) : '';
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ng-reason-btn';
+            btn.dataset.id   = r.id;
+            btn.dataset.code = r.code;
+            btn.dataset.name = r.name;
+            if (selectedId === r.id) btn.classList.add('selected');
+
+            btn.innerHTML = `
+                ${keyLabel
+                    ? `<span class="ng-reason-btn__key">${keyLabel}</span>`
+                    : `<span style="min-width:20px;flex-shrink:0"></span>`}
+                <span class="ng-reason-btn__body">
+                    <span class="ng-reason-btn__code-badge">${escHtml(r.code)}</span>
+                    <span class="ng-reason-btn__name">${escHtml(r.name)}</span>
+                </span>`;
+
+            btn.addEventListener('click', () => selectReason(r.id, r.code, r.name));
+            ngReasonGrid.appendChild(btn);
+        });
+    }
+
+    function escHtml(s) {
+        return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function applySearch(q) {
+        const kw = q.trim().toLowerCase();
+        if (!kw) { renderGrid(allReasons); return; }
+        renderGrid(allReasons.filter(r =>
+            (r.code ?? '').toLowerCase().includes(kw) ||
+            (r.name ?? '').toLowerCase().includes(kw)
+        ));
+    }
+
+    function selectReason(id, code, name) {
+        selectedId   = id;
+        selectedCode = code;
+        selectedName = name;
+        ngReasonGrid.querySelectorAll('.ng-reason-btn').forEach(b => {
+            b.classList.toggle('selected', Number(b.dataset.id) === id);
+        });
+        ngPreviewCode.textContent = code;
+        ngPreviewName.textContent = name;
+        ngSelectedPreview.classList.add('visible');
+        ngDescInput.focus();
+        btnNgConfirm.disabled = false;   // ← bật nút khi đã chọn
+    }
+
+    function clearSelection() {
+        selectedId = selectedCode = selectedName = null;
+        ngSelectedPreview.classList.remove('visible');
+        ngPreviewCode.textContent = '';
+        ngPreviewName.textContent = '';
+        btnNgConfirm.disabled = true;    // ← tắt nút khi chưa chọn
+    }
+
+    // ── Open / close ──────────────────────────────────────
+    function openNgDialog(wo, sn) {
+        pendingNgWO = wo; pendingNgSN = sn;
+        clearSelection();
+        ngDescInput.value   = '';
+        ngSearchInput.value = '';
+        ngDialogSN.textContent = sn;
+        renderGrid(allReasons);
+        ngOverlay.classList.add('open');
+        setTimeout(() => ngSearchInput.focus(), 50);
+    }
+
+    function closeNgDialog() {
+        ngOverlay.classList.remove('open');
+        clearSelection();
+        pendingNgWO = pendingNgSN = '';
+    }
+
+    // ── Search ────────────────────────────────────────────
+    ngSearchInput.addEventListener('input', function () {
+        applySearch(this.value);
+        clearSelection();
+    });
+
+    ngSearchInput.addEventListener('keydown', function (e) {
+        const numMap = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'8':7,'9':8};
+        if (e.key in numMap) {
+            const idx = numMap[e.key];
+            if (idx < filteredReasons.length) {
+                e.preventDefault();
+                const r = filteredReasons[idx];
+                selectReason(r.id, r.code, r.name);
+            }
+            return;
+        }
+        if (e.key === 'Enter')  { e.preventDefault(); confirmNg(); return; }
+        if (e.key === 'Escape') { e.preventDefault(); handleSkip(); return; }
+        if (e.key === 'Tab' && !e.shiftKey && selectedCode) {
+            e.preventDefault(); ngDescInput.focus();
+        }
+    });
+
+    // ── Confirm / skip ────────────────────────────────────
+    async function confirmNg() {
+        if (!selectedCode) return;   // guard: không cho submit nếu chưa chọn
+        const wo   = pendingNgWO;
+        const sn   = pendingNgSN;
+        const code = selectedCode;
+        const name = selectedName;
+        const desc = ngDescInput.value.trim() || null;
+        closeNgDialog();
+        await submitScan('NG', wo, sn, code, name, desc);
+        snInput.focus();
+    }
+
+    function handleSkip() {
+        closeNgDialog();
+        resetSNAndStatus();
+        updateWODisplay(null);
+        updateColorDisplay(null);
+        resetCircle();
+        snInput.focus();
+    }
+
+    btnNgConfirm.addEventListener('click', confirmNg);
+    btnNgSkip.addEventListener('click', handleSkip);
+
+    // ── Keyboard in overlay (ngoài search) ───────────────
+    ngOverlay.addEventListener('keydown', function (e) {
+        if (!ngOverlay.classList.contains('open')) return;
+        const activeEl = document.activeElement;
+        if (activeEl === ngSearchInput) return;
+
+        if (e.key === 'Escape') { e.preventDefault(); handleSkip(); return; }
+        if (e.key === 'Enter' && activeEl !== ngDescInput) { e.preventDefault(); confirmNg(); return; }
+
+        const numMap = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'8':7,'9':8};
+        if (e.key in numMap && activeEl !== ngDescInput) {
+            const idx = numMap[e.key];
+            if (idx < filteredReasons.length) {
+                e.preventDefault();
+                const r = filteredReasons[idx];
+                selectReason(r.id, r.code, r.name);
+            }
+        }
+    });
+
+    ngDescInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); confirmNg(); }
+        if (e.key === 'Escape') { e.preventDefault(); handleSkip(); }
+    });
+
+    // ── SN input ──────────────────────────────────────────
+    snInput.addEventListener('input', function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 15);
+        clearSNError();
+    });
+
+    snInput.addEventListener('keydown', async function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!validateSN()) return;
+            const sn = snInput.value.trim();
+
+            currentColor = getColorFromSerial(sn);
+            updateColorDisplay(currentColor);
+
+            const wo = await fetchWOFromSerial(sn);
+            if (!wo) {
+                showToast(fqcI18n.t('toastWoNotFoundTitle'),
+                    `<b style="font-family:'Courier New',monospace;color:#dc2626">${sn}</b><br>${fqcI18n.t('toastWoNotFoundMsg')}`);
+                snInput.value = ''; clearSNError(); snInput.focus(); return;
+            }
+
+            try {
+                const res = await fetch(`${pathBase}/FQC/checkSN?sn=${encodeURIComponent(sn)}&wo=${encodeURIComponent(wo)}&station=${STATION}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.isDuplicate) {
+                        showToast(fqcI18n.t('toastDuplicateTitle'),
+                            `<b style="font-family:'Courier New',monospace;color:#dc2626">${sn}</b><br>${fqcI18n.t('toastDuplicateMsg')}`);
+                        snInput.value = ''; clearSNError(); snInput.focus();
+                        setTimeout(() => { currentWO = ''; woInput.value = ''; updateWODisplay(null); updateColorDisplay(null); woStatusText.textContent = ''; }, 2000);
+                        return;
+                    }
+                }
+            } catch { }
+
+            // ── Station control: SN phải đã input tại MiddlePanel + BackPanel ──
+            // trước khi được phép check tại trạm bán thành phẩm này.
+            try {
+                const stationRes = await fetch(`${pathBase}/FQC/checkStation?sn=${encodeURIComponent(sn)}&station=${STATION}`);
+                if (stationRes.ok) {
+                    const stationData = await stationRes.json();
+                    if (stationData.blocked) {
+                        showToast(fqcI18n.t('toastStationBlockedTitle'),
+                            `<b style="font-family:'Courier New',monospace;color:#dc2626">${sn}</b><br>${fqcI18n.t('toastStationBlockedMsg')} <b>${stationData.missingStations.join(', ')}</b>`);
+                        snInput.value = ''; clearSNError(); snInput.focus();
+                        setTimeout(() => { currentWO = ''; woInput.value = ''; updateWODisplay(null); updateColorDisplay(null); woStatusText.textContent = ''; }, 2000);
+                        return;
+                    }
+                }
+            } catch { }
+
+            statusInput.value = ''; clearStatusError(); statusInput.focus();
+        }
+        if (e.key === 'Escape') { e.preventDefault(); resetSNAndStatus(); snInput.focus(); }
+    });
+
+    // ── Status input ──────────────────────────────────────
+    statusInput.addEventListener('input', function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4);
+        clearStatusError();
+        const v = this.value;
+        this.classList.toggle('is-pass', v === 'PASS');
+        this.classList.toggle('is-ng',   v === 'NG');
+        if (v === 'PASS')      submitScan('PASS');
+        else if (v === 'NG')   triggerNgDialog();
+    });
+
+    statusInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const v = this.value.trim();
+            if      (v === 'PASS') submitScan('PASS');
+            else if (v === 'NG')   triggerNgDialog();
+            else                   showStatusError();
+        }
+        if (e.key === 'Escape') { e.preventDefault(); resetSNAndStatus(); snInput.focus(); }
+    });
+
+    function triggerNgDialog() {
+        const wo = currentWO;
+        const sn = snInput.value.trim();
+        snInput.value = ''; statusInput.value = '';
+        statusInput.classList.remove('is-pass', 'is-ng');
+        clearStatusError(); clearSNError();
+        currentWO = ''; woInput.value = '';
+        woStatusText.textContent = '';
+        showCircle('ng');
+        openNgDialog(wo, sn);
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (ngOverlay.classList.contains('open')) return;
+        const tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if (e.key === 'Escape') { e.preventDefault(); resetSNAndStatus(); snInput.focus(); }
+    });
+
+    // ── API: serial → WO ──────────────────────────────────
+    async function fetchWOFromSerial(sn) {
+        woSpinner.classList.add('visible');
+        woStatusText.textContent = fqcI18n.t('woStatusLooking');
+        woStatusText.className   = 'wo-status-text';
+        try {
+            const res = await fetch(`${pathBase}/FQC/getWOFromSerial?serial=${encodeURIComponent(sn)}`);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            const wo   = data.workOrder;
+            if (!wo) throw new Error();
+            currentWO = wo; woInput.value = wo;
+            updateWODisplay(wo); fetchQty(wo);
+            woStatusText.textContent = `✓ ${wo}`;
+            woStatusText.className   = 'wo-status-text found';
+            return wo;
+        } catch {
+            currentWO = ''; woInput.value = '';
+            updateWODisplay(null); updateColorDisplay(null);
+            woStatusText.textContent = fqcI18n.t('woStatusNotFound');
+            woStatusText.className   = 'wo-status-text notfound';
+            return null;
+        } finally { woSpinner.classList.remove('visible'); }
+    }
+
+    async function fetchQty(wo) {
+        try {
+            const res = await fetch(`${pathBase}/FQC/qty?workOrder=${encodeURIComponent(wo)}&station=${STATION}`);
+            if (res.ok) {
+                const d = await res.json();
+                qty = d.qty ?? 0; passQty = d.passQty ?? 0; ngQty = d.ngQty ?? 0;
+                updateQtyDisplay();
+            }
+        } catch { }
+    }
+
+    // ── submitScan ────────────────────────────────────────
+    async function submitScan(verdictStr, woOverride, snOverride, ngCode, ngName, ngDescription) {
+        const wo     = woOverride ?? currentWO;
+        const sn     = snOverride ?? snInput.value.trim();
+        const isPass = verdictStr === 'PASS';
+
+        if (!wo) { flashInput(woInput); snInput.focus(); return; }
+        if (!sn) { flashInput(snInput); snInput.focus(); return; }
+
+        if (isPass) {
+            showCircle('pass');
+            snInput.value = ''; statusInput.value = '';
+            statusInput.classList.remove('is-pass', 'is-ng');
+            clearStatusError(); clearSNError();
+            currentWO = ''; woInput.value = '';
+            woStatusText.textContent = '';
+            snInput.focus();
+        }
+
+        try {
+            const res = await fetch(`${pathBase}/FQC/scan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    workOrder:     wo,
+                    serialNumber:  sn,
+                    status:        verdictStr,
+                    station:       STATION,
+                    color:         currentColor ?? null,
+                    ngCode:        ngCode        ?? null,
+                    ngReason:      ngName        ?? null,
+                    ngDescription: ngDescription ?? null
+                })
+            });
+            if (res.ok) {
+                const d = await res.json();
+                qty = d.qty ?? qty; passQty = d.passQty ?? passQty; ngQty = d.ngQty ?? ngQty;
+            } else { qty++; isPass ? passQty++ : ngQty++; }
+        } catch { qty++; isPass ? passQty++ : ngQty++; }
+
+        animateQty();
+        setTimeout(resetCircle, 2000);
+    }
+
+    // ── UI helpers ────────────────────────────────────────
+    function updateWODisplay(v) {
+        if (v) { woDisplay.textContent = v; woDisplay.classList.remove('empty'); }
+        else   { woDisplay.textContent = fqcI18n.t('woNotEntered'); woDisplay.classList.add('empty'); }
+    }
+    function updateColorDisplay(v) {
+        if (v) {
+            const map = {'Blue':'#3b82f6','Green':'#22c55e','Pink':'#ec4899','Red':'#ef4444','Black':'#64748b','White':'#e2e8f0'};
+            const hex = map[v] || '#94a3b8';
+            colorDisplay.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hex};box-shadow:0 0 0 2px rgba(255,255,255,0.15);vertical-align:middle;margin-right:8px;flex-shrink:0"></span>${v}`;
+            colorDisplay.style.display = 'flex'; colorDisplay.style.alignItems = 'center'; colorDisplay.style.justifyContent = 'center';
+            colorDisplay.classList.remove('empty');
+        } else {
+            colorDisplay.innerHTML = '—'; colorDisplay.style.display = '';
+            colorDisplay.classList.add('empty');
+        }
+    }
+    function showCircle(state) {
+        ring.setAttribute('class', 'circle-ring ' + state);
+        verdict.textContent = state === 'pass' ? 'PASS' : 'NG'; verdict.className = 'circle-verdict ' + state;
+        sub.textContent     = state === 'pass' ? 'PASS' : 'NG'; sub.className     = 'circle-sub ' + state;
+    }
+    function resetCircle() {
+        ring.style.transition = 'none'; ring.setAttribute('class', 'circle-ring');
+        requestAnimationFrame(() => ring.style.transition = '');
+        verdict.textContent = '—'; verdict.className = 'circle-verdict';
+        sub.textContent = fqcI18n.t('circleNotScanned'); sub.className = 'circle-sub';
+    }
+    function updateQtyDisplay() { qtyValue.textContent = qty; passQtyValue.textContent = passQty; ngQtyValue.textContent = ngQty; }
+    function animateQty() { updateQtyDisplay(); qtyValue.classList.add('bump'); setTimeout(() => qtyValue.classList.remove('bump'), 200); }
+    function resetSNAndStatus() { snInput.value = ''; statusInput.value = ''; statusInput.classList.remove('is-pass','is-ng'); clearSNError(); clearStatusError(); resetCircle(); }
+    function validateSN() {
+        if (snInput.value.trim().length === 15) { clearSNError(); return true; }
+        snInput.style.borderColor = '#ef4444'; snInput.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.18)';
+        snErrorMsg.style.display = 'block'; snInput.focus(); return false;
+    }
+    function clearSNError() { snInput.style.borderColor = ''; snInput.style.boxShadow = ''; snErrorMsg.style.display = 'none'; }
+    function showStatusError() { statusInput.style.borderColor = '#ef4444'; statusInput.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.18)'; statusErrorMsg.style.display = 'block'; statusInput.focus(); }
+    function clearStatusError() { statusInput.style.borderColor = ''; statusInput.style.boxShadow = ''; statusErrorMsg.style.display = 'none'; }
+    function flashInput(el) { el.style.borderColor = '#ef4444'; el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.18)'; setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 800); }
+
+    let _toastTimer = null;
+    function showToast(title, msg) {
+        const toast = document.getElementById('toastAlert');
+        document.getElementById('toastTitle').textContent = title;
+        document.getElementById('toastMsg').innerHTML     = msg;
+        toast.style.display = 'flex'; toast.style.opacity = '1'; toast.style.animation = 'none';
+        requestAnimationFrame(() => { toast.style.animation = 'toastIn 0.25s ease'; });
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => {
+            toast.style.transition = 'opacity 0.3s'; toast.style.opacity = '0';
+            setTimeout(() => { toast.style.display = 'none'; toast.style.transition = ''; toast.style.opacity = '1'; }, 300);
+        }, 2500);
+    }
+
+}());
+</script>
+}

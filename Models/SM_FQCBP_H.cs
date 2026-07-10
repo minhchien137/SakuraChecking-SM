@@ -14,6 +14,11 @@ namespace ScanCheckSakura.Models
         [MaxLength(100)]
         public string WorkOrder { get; set; } = string.Empty;
 
+        // Trạm thực hiện scan: "FQCBP" (F/G), "FQC02", "FQC04", ...
+        [Required]
+        [MaxLength(20)]
+        public string Station { get; set; } = "FQCBP";
+
         [Required]
         [MaxLength(20)]
         public string SerialNumber { get; set; } = string.Empty;

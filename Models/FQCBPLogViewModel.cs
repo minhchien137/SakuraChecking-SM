@@ -4,6 +4,7 @@ namespace ScanCheckSakura.Models
     {
         public string? WorkOrder    { get; set; }
         public string? SerialNumber { get; set; }
+        public string? Station      { get; set; }
         public string? Status       { get; set; }
         public string? NgCode { get; set; }   // ← NEW
         public string? Color { get; set; }

@@ -24,26 +24,41 @@
             color: #e2e8f0;
         }
 
-        /* Dark Navbar Overrides */
+        /* Sigma Red Navbar Overrides */
         .navbar {
-            background-color: #0f1217 !important;
-            border-bottom: 1px solid #334155 !important;
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #E5E7EB !important;
         }
 
         .navbar-brand,
         .nav-link {
-            color: #e2e8f0 !important;
-            font-weight: 500;
+            color: #C8102E !important;
+            font-weight: 600;
         }
 
         .nav-link:hover,
         .nav-link:focus {
-            color: #60a5fa !important;
+            color: #9B0B22 !important;
+        }
+
+        .nav-link.station-tab.active {
+            font-weight: 800;
+            border-bottom: 2px solid #C8102E;
         }
 
         .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(226, 232, 240, 0.95)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(200, 16, 46, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
         }
+
+        /* Language flag switcher — góc phải navbar, chỉ hiện trên các trang FQC */
+        .fqc-lang-switch { display: flex; align-items: center; gap: 6px; }
+        .lang-flag {
+            width: 24px; height: 17px; object-fit: cover; border-radius: 3px;
+            cursor: pointer; opacity: 0.4; border: 1px solid #E5E7EB;
+            transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .lang-flag:hover  { opacity: 0.75; transform: translateY(-1px); }
+        .lang-flag.active { opacity: 1; box-shadow: 0 0 0 2px rgba(200,16,46,0.35); border-color: #C8102E; }
 
         .box-shadow {
             box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .4) !important;
@@ -56,27 +71,62 @@
 </head>
 <body>
 
+    @{
+        // Trạm hiện tại được suy ra từ action đang render, để "FQC History" / "FQC Report"
+        // trong navbar luôn trỏ đúng vào trạm mà người dùng đang thao tác (FQCBP/FQC02/FQC04).
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+        var currentStation = (currentAction == "FQC02" || currentAction == "FQC02H") ? "FQC02"
+                            : (currentAction == "FQC04" || currentAction == "FQC04H") ? "FQC04"
+                            : "FQCBP";
+
+        var pb = Context.Request.PathBase.Value?.TrimEnd('/') ?? "";
+        var historyUrl = currentStation switch
+        {
+            "FQC02" => $"{pb}/FQC/FQC02H",
+            "FQC04" => $"{pb}/FQC/FQC04H",
+            _        => $"{pb}/FQC/FQCBPH"
+        };
+        var reportUrl = currentStation == "FQCBP"
+            ? $"{pb}/FQC/FQCBPR"
+            : $"{pb}/FQC/FQCBPR?Station={currentStation}";
+
+        var isFqcPage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "FQC", StringComparison.OrdinalIgnoreCase);
+    }
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" 
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="FQC" asp-action="FQCBP">FQC Scan</a>
+                            <a class="nav-link station-tab @(currentStation == "FQCBP" ? "active" : "")" asp-area="" asp-controller="FQC" asp-action="FQCBP">FQC F/G</a>
                         </li>
-                        
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="FQC" asp-action="FQCBPH">FQC History</a>
+                            <a class="nav-link station-tab @(currentStation == "FQC02" ? "active" : "")" asp-area="" asp-controller="FQC" asp-action="FQC02">FQC02</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link station-tab @(currentStation == "FQC04" ? "active" : "")" asp-area="" asp-controller="FQC" asp-action="FQC04">FQC04</a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="FQC" asp-action="FQCBPR">FQC Report</a>
+                            <a class="nav-link" href="@historyUrl">FQC History</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="@reportUrl">FQC Report</a>
                         </li>
                     </ul>
+
+                    @if (isFqcPage)
+                    {
+                        <div class="fqc-lang-switch">
+                            <img src="~/images/cn.png" alt="中文" title="中文" class="lang-flag" data-lang="zh" onclick="fqcI18n.setLang('zh')" />
+                            <img src="~/images/en.png" alt="English" title="English" class="lang-flag" data-lang="en" onclick="fqcI18n.setLang('en')" />
+                        </div>
+                    }
                 </div>
             </div>
         </nav>
@@ -100,6 +150,10 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (isFqcPage)
+    {
+        <script src="~/js/fqc-i18n.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
