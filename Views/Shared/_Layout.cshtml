@@ -91,6 +91,19 @@
             : $"{pb}/FQC/FQCBPR?Station={currentStation}";
 
         var isFqcPage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "FQC", StringComparison.OrdinalIgnoreCase);
+
+        var stationLabel = currentStation switch
+        {
+            "FQC02" => "FQC02",
+            "FQC04" => "FQC04",
+            _        => "FQC F/G"
+        };
+        var stationAction = currentStation switch
+        {
+            "FQC02" => "FQC02",
+            "FQC04" => "FQC04",
+            _        => "FQCBP"
+        };
     }
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
@@ -102,13 +115,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link station-tab @(currentStation == "FQCBP" ? "active" : "")" asp-area="" asp-controller="FQC" asp-action="FQCBP">FQC F/G</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link station-tab @(currentStation == "FQC02" ? "active" : "")" asp-area="" asp-controller="FQC" asp-action="FQC02">FQC02</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link station-tab @(currentStation == "FQC04" ? "active" : "")" asp-area="" asp-controller="FQC" asp-action="FQC04">FQC04</a>
+                            <a class="nav-link station-tab active" asp-area="" asp-controller="FQC" asp-action="@stationAction">@stationLabel</a>
                         </li>
 
                         <li class="nav-item">
