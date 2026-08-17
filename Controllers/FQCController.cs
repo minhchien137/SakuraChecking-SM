@@ -460,9 +460,10 @@ public class FQCController : Controller
     //         01234    56           7          89A      BCDE
     private static readonly Dictionary<string, string> _serialVariantColorMap = new()
     {
-        { "00", "Blue"  },
-        { "01", "Pink"  },
-        { "02", "Green" },
+        { "00", "Blue"   },
+        { "01", "Pink"   },
+        { "02", "Green"  },
+        { "03", "Luther" },
     };
 
     [HttpGet]

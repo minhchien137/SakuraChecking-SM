@@ -520,6 +520,7 @@
         '00': 'Blue',
         '01': 'Pink',
         '02': 'Green',
+        '03': 'Luther',
     };
     function getColorFromSerial(serialNumber) {
         const sn = (serialNumber || '').trim().toUpperCase();
@@ -919,7 +920,7 @@
     }
     function updateColorDisplay(v) {
         if (v) {
-            const map = {'Blue':'#3b82f6','Green':'#22c55e','Pink':'#ec4899','Red':'#ef4444','Black':'#64748b','White':'#e2e8f0'};
+            const map = {'Blue':'#3b82f6','Green':'#22c55e','Pink':'#ec4899','Red':'#ef4444','Black':'#64748b','White':'#e2e8f0','Luther':'#8B5A2B'};
             const hex = map[v] || '#94a3b8';
             colorDisplay.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${hex};box-shadow:0 0 0 2px rgba(255,255,255,0.15);vertical-align:middle;margin-right:8px;flex-shrink:0"></span>${v}`;
             colorDisplay.style.display = 'flex'; colorDisplay.style.alignItems = 'center'; colorDisplay.style.justifyContent = 'center';
