@@ -1089,3 +1089,4 @@ D:\SakuraChecking-SM\obj\Release\net9.0\win-x64\ScanCheckSakura.pdb
 D:\SakuraChecking-SM\obj\Release\net9.0\win-x64\ScanCheckSakura.genruntimeconfig.cache
 D:\SakuraChecking-SM\obj\Release\net9.0\win-x64\ref\ScanCheckSakura.dll
 D:\SakuraChecking-SM\obj\Release\net9.0\win-x64\compressed\tl63qwq1us-{0}-57zhwe549u-57zhwe549u.gz
+D:\SakuraChecking-SM\obj\Release\net9.0\win-x64\compressed\f9fegsm48a-{0}-ljhtqj4xoy-ljhtqj4xoy.gz

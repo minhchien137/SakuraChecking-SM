@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ScanCheckSakura")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c99a62290b3c6fc17d3920f0024d13e16f9d7fca")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8b9e7d1f9efb1fa9cf2ad928c8eff13775e17115")]
 [assembly: System.Reflection.AssemblyProductAttribute("ScanCheckSakura")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ScanCheckSakura")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

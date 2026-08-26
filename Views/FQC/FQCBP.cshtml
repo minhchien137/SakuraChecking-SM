@@ -54,7 +54,7 @@
         font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
     .fqc-header { text-align: center; margin-bottom: 2.5rem; padding-bottom: 1.75rem; border-bottom: 1px dashed var(--border); }
-    .fqc-header h1 { font-family: 'Barlow', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -0.3px; margin: 0 0 0.5rem; color: var(--red-dark); }
+    .fqc-header h1 { font-family: 'Barlow', sans-serif; font-size: 2.8rem; font-weight: 800; letter-spacing: -0.3px; margin: 0 0 0.5rem; color: var(--red-dark); }
     .header-accent { width: 40px; height: 4px; margin: 10px auto 0; border-radius: 2px; background: linear-gradient(90deg, var(--red-dark), var(--red-mid)); }
 
     .btn-history {
@@ -934,6 +934,7 @@
         ring.setAttribute('class', 'circle-ring ' + state);
         verdict.textContent = state === 'pass' ? 'PASS' : 'NG'; verdict.className = 'circle-verdict ' + state;
         sub.textContent     = state === 'pass' ? 'PASS' : 'NG'; sub.className     = 'circle-sub ' + state;
+        if (window.fqcSound) { state === 'pass' ? fqcSound.playPass() : fqcSound.playNg(); }
     }
     function resetCircle() {
         ring.style.transition = 'none'; ring.setAttribute('class', 'circle-ring');
