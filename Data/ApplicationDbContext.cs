@@ -16,6 +16,10 @@ namespace ScanCheckSakura.Data
         public DbSet<SM_FQCBP>   SM_FQCBP   { get; set; }
         public DbSet<SM_FQCBP_H> SM_FQCBP_H { get; set; }
 
+        // *********** FPY (First Pass Yield) ************
+        public DbSet<SM_FQCFPY>   SM_FQCFPY   { get; set; }
+        public DbSet<SM_FQCFPY_H> SM_FQCFPY_H { get; set; }
+
         public DbSet<SVN_Defect_Record> SVN_Defect_Record { get; set; }
         public DbSet<SVN_target>        SVN_target        { get; set; }
 

@@ -14,6 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<ICBCPService, CBCPService>();
 builder.Services.AddScoped<ICBCPLogService, CBCPLogService>();
 builder.Services.AddScoped<IFqcbpService, FqcbpService>();
+builder.Services.AddScoped<IFqcfpyService, FqcfpyService>();
 builder.Services.AddScoped<IFqcOdooService, FqcOdooService>();
 builder.Services.AddScoped<IDefectSyncService, DefectSyncService>();
 builder.Services.AddHttpClient<OdooController>();

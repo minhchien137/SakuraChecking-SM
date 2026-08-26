@@ -1,0 +1,357 @@
+@model ScanCheckSakura.Models.FQCFPYLogViewModel
+@{
+    ViewData["Title"] = "First Pass Yield History";
+
+    var colorHexMap = new Dictionary<string, string> {
+        {"Blue","#3b82f6"},{"Green","#22c55e"},{"Pink","#ec4899"},
+        {"Red","#ef4444"},{"Black","#64748b"},{"White","#e2e8f0"},
+        {"Yellow","#eab308"},{"Orange","#f97316"},{"Purple","#a78bfa"},
+        {"Grey","#94a3b8"},{"Luther","#8B5A2B"}
+    };
+    var colorOptions = colorHexMap.Keys.ToArray();
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow:wght@600;700;800&display=swap');
+
+    :root {
+        --red:        #C8102E;
+        --red-dark:   #9B0B22;
+        --red-mid:    #E63950;
+        --red-light:  #FFE5E9;
+        --red-xlight: #FFF5F6;
+        --white:      #FFFFFF;
+        --gray-50:    #F9FAFB;
+        --gray-100:   #F3F4F6;
+        --gray-200:   #E5E7EB;
+        --gray-400:   #9CA3AF;
+        --gray-500:   #6B7280;
+        --gray-600:   #4B5563;
+        --gray-700:   #374151;
+        --gray-900:   #111827;
+        --success:    #059669;
+        --danger:     #DC2626;
+        --shadow-sm:  0 1px 3px rgba(200,16,46,0.08);
+        --shadow-md:  0 4px 20px rgba(200,16,46,0.12);
+        --shadow-lg:  0 8px 40px rgba(200,16,46,0.18);
+
+        /* alias sang tên biến cũ để các rule bên dưới không phải viết lại toàn bộ */
+        --bg-primary:     var(--gray-50);
+        --bg-secondary:   var(--white);
+        --bg-tertiary:    var(--gray-50);
+        --text-primary:   var(--gray-900);
+        --text-secondary: var(--gray-600);
+        --text-tertiary:  var(--gray-500);
+        --border:         var(--gray-200);
+        --accent:         var(--red);
+        --pass-color:     var(--success);
+        --pass-bg:        #ECFDF5;
+        --ng-color:       var(--danger);
+        --ng-bg:          var(--red-xlight);
+        --radius:         14px;
+    }
+    body {
+        background: var(--bg-primary); color: var(--text-primary);
+        background-image:
+            radial-gradient(ellipse at 10% 30%, rgba(200,16,46,0.05) 0%, transparent 55%),
+            radial-gradient(ellipse at 90% 70%, rgba(230,57,80,0.04) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+
+    .log-wrap { max-width: 1500px; margin: 0 auto; padding: 2.5rem 2rem 4rem; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+
+    .log-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); }
+    .log-header__left h1 { font-family: 'Barlow', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--red-dark); margin: 0 0 0.3rem; }
+    .log-header__left p  { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+
+    .btn-back { display: inline-flex; align-items: center; gap: 0.4rem; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; background: var(--white); color: var(--gray-500); border: 1.5px solid var(--gray-200); border-radius: 10px; text-decoration: none; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+    .btn-back:hover { color: var(--red); border-color: var(--red); background: var(--red-xlight); }
+
+    .stat-row { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; }
+    .stat-chip { background: var(--white); border: 1px solid rgba(200,16,46,0.07); border-radius: var(--radius); padding: 0.75rem 1.25rem; display: flex; flex-direction: column; gap: 2px; min-width: 110px; box-shadow: var(--shadow-sm); }
+    .stat-chip__val { font-family: 'Barlow', sans-serif; font-size: 1.6rem; font-weight: 800; line-height: 1; }
+    .stat-chip__lbl { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    .filter-panel { background: var(--white); border: 1px solid rgba(200,16,46,0.07); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+    /* 8 columns: WO | SN | NgCode | Color | Status | DateFrom | DateTo | Actions */
+    .filter-grid { display: grid; grid-template-columns: 1.4fr 1.1fr 0.9fr 0.9fr 120px 150px 150px auto; gap: 0.75rem 1rem; align-items: end; }
+    @@media (max-width: 1200px) { .filter-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+    @@media (max-width: 640px)  { .filter-grid { grid-template-columns: 1fr; } }
+
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--gray-700); }
+    .filter-group input,
+    .filter-group select { padding: 0 11px; font-size: 0.875rem; font-family: inherit; background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 9px; color: var(--text-primary); outline: none; transition: border-color 0.2s; width: 100%; height: 38px; }
+    .filter-group input:hover,
+    .filter-group select:hover { border-color: var(--red-mid); }
+    .filter-group input:focus,
+    .filter-group select:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(200,16,46,0.1); }
+    .filter-group select option { background: var(--white); }
+
+    .filter-actions { display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap; }
+    .btn-filter { padding: 0 18px; font-size: 0.875rem; font-weight: 700; background: linear-gradient(135deg, var(--red-dark), var(--red-mid)); color: #fff; border: none; border-radius: 10px; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; height: 38px; white-space: nowrap; box-shadow: 0 4px 14px rgba(200,16,46,0.3); }
+    .btn-filter:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(200,16,46,0.4); }
+    .btn-reset-filter { padding: 0 14px; font-size: 0.875rem; font-weight: 600; background: var(--white); color: var(--gray-500); border: 1.5px solid var(--gray-200); border-radius: 10px; height: 38px; text-decoration: none; display: inline-flex; align-items: center; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
+    .btn-reset-filter:hover { color: var(--red); border-color: var(--red); }
+    .btn-excel { padding: 0 14px; font-size: 0.875rem; font-weight: 700; background: var(--success); color: #fff; border: 1px solid #047857; border-radius: 10px; height: 38px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: background 0.15s; white-space: nowrap; }
+    .btn-excel:hover { background: #047857; color: #fff; }
+
+    .table-card { background: var(--white); border: 1px solid rgba(200,16,46,0.07); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-md); }
+    .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.25rem; border-bottom: 1px dashed var(--border); }
+    .table-toolbar__info { font-size: 0.82rem; color: var(--text-tertiary); }
+    .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 440px); }
+
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .log-table th { padding: 10px 14px; text-align: left; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary); background: var(--gray-50); border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .log-table td { padding: 9px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: var(--red-xlight); }
+
+    .td-time   { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; }
+    .td-mono   { font-family: 'Courier New', monospace; font-size: 0.88rem; }
+    .td-empty  { color: var(--text-tertiary); font-size: 0.78rem; }
+    .td-color  { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; }
+
+    /* NG Code badge – prominent */
+    .ng-code-badge {
+        display: inline-flex; align-items: center;
+        padding: 2px 8px; border-radius: 5px;
+        background: var(--red-light); border: 1px solid rgba(220,38,38,0.3);
+        font-family: 'Courier New', monospace; font-size: 0.8rem;
+        font-weight: 800; letter-spacing: 0.06em; color: var(--danger);
+        white-space: nowrap;
+    }
+    .td-reason { font-size: 0.82rem; color: var(--text-primary); }
+    .td-desc   { font-size: 0.8rem; color: var(--text-secondary); max-width: 200px; word-break: break-word; }
+
+    .pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; white-space: nowrap; }
+    .pill-pass { background: var(--pass-bg); color: var(--success); border: 1px solid rgba(5,150,105,0.25); }
+    .pill-ng   { background: var(--ng-bg);   color: var(--danger);  border: 1px solid rgba(220,38,38,0.25); }
+
+    .table-empty { padding: 3rem; text-align: center; color: var(--text-tertiary); font-size: 0.9rem; }
+
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 1rem; border-top: 1px dashed var(--border); flex-wrap: wrap; }
+    .page-btn { padding: 5px 11px; font-size: 0.82rem; font-weight: 600; background: var(--white); color: var(--gray-500); border: 1.5px solid var(--gray-200); border-radius: 8px; text-decoration: none; transition: background 0.15s, color 0.15s, border-color 0.15s; min-width: 34px; text-align: center; }
+    .page-btn:hover  { border-color: var(--red); color: var(--red); }
+    .page-btn.active { background: linear-gradient(135deg, var(--red-dark), var(--red-mid)); color: #fff; border-color: var(--red); }
+    .page-btn.disabled { opacity: 0.35; pointer-events: none; }
+</style>
+
+<div class="log-wrap">
+
+    <div class="log-header">
+        <div class="log-header__left">
+            <h1 data-i18n="historyTitleFpy">一次合格率检验历史</h1>
+            <p data-i18n="historySubFpy">首件检验(FPY)工位序列号检查结果</p>
+        </div>
+        <a asp-action="FPY" asp-controller="FQC" class="btn-back" data-i18n="backToCheck">← 返回检查</a>
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--text-primary)">@Model.TotalCount</span>
+            <span class="stat-chip__lbl" data-i18n="statTotal">总数</span>
+        </div>
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--pass-color)">@Model.PassCount</span>
+            <span class="stat-chip__lbl" data-i18n="statPass">通过</span>
+        </div>
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--ng-color)">@Model.NgCount</span>
+            <span class="stat-chip__lbl" data-i18n="statNg">不良</span>
+        </div>
+        <div class="stat-chip">
+            <span class="stat-chip__val" style="color:var(--accent)">
+                @(Model.TotalCount > 0 ? Math.Round((double)Model.PassCount / Model.TotalCount * 100, 1) : 0)%
+            </span>
+            <span class="stat-chip__lbl" data-i18n="statPassRate">通过率</span>
+        </div>
+    </div>
+
+    <div class="filter-panel">
+        <form asp-action="FPYH" asp-controller="FQC" method="get">
+            <div class="filter-grid">
+
+                <div class="filter-group">
+                    <label data-i18n="labelWorkOrder">工单</label>
+                    <input type="text" name="WorkOrder" value="@Model.Filter.WorkOrder" data-i18n-placeholder="filterPlaceholderWo" placeholder="搜索工单" />
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="labelSerialNumber">序列号</label>
+                    <input type="text" name="SerialNumber" value="@Model.Filter.SerialNumber" data-i18n-placeholder="filterPlaceholderSN" placeholder="搜索序列号" />
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="filterLabelNgCode">不良代码/NGCode</label>
+                    <input type="text" name="NgCode" value="@Model.Filter.NgCode"
+                           data-i18n-placeholder="filterPlaceholderNgCode" placeholder="筛选不良代码…" />
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="labelColor">颜色</label>
+                    <select name="Color">
+                        <option value="" data-i18n="optionAllDash">-- 全部 --</option>
+                        @foreach (var c in colorOptions)
+                        {
+                            <option value="@c" selected="@(Model.Filter.Color == c ? "selected" : null)">@c</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="labelStatus">状态</label>
+                    <select name="Status">
+                        <option value=""     selected="@(string.IsNullOrEmpty(Model.Filter.Status) ? "selected" : null)" data-i18n="optionAllDash">-- 全部 --</option>
+                        <option value="PASS" selected="@(Model.Filter.Status == "PASS" ? "selected" : null)">✓ PASS</option>
+                        <option value="NG"   selected="@(Model.Filter.Status == "NG"   ? "selected" : null)">✗ NG</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="filterLabelDateFrom">开始日期</label>
+                    <input type="date" name="DateFrom" value="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="filterLabelDateTo">结束日期</label>
+                    <input type="date" name="DateTo" value="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <input type="hidden" name="Page"     value="1" />
+                <input type="hidden" name="PageSize" value="@Model.Filter.PageSize" />
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter" data-i18n="btnFilter">筛选</button>
+                    <a asp-action="FPYH" asp-controller="FQC" class="btn-reset-filter" data-i18n="btnReset">重置</a>
+                    <a asp-action="FPYExport" asp-controller="FQC"
+                       asp-route-WorkOrder="@Model.Filter.WorkOrder"
+                       asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                       asp-route-Status="@Model.Filter.Status"
+                       asp-route-NgCode="@Model.Filter.NgCode"
+                       asp-route-Color="@Model.Filter.Color"
+                       asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")"
+                       class="btn-excel" data-i18n="btnExport">↓ 导出</a>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="table-toolbar">
+            <span class="table-toolbar__info">
+                @if (Model.TotalCount == 0) { <span data-i18n="noRecordsShort">未找到记录</span> }
+                else { <span><span data-i18n="showingLabel">显示</span> @((Model.CurrentPage - 1) * Model.Filter.PageSize + 1)–@Math.Min(Model.CurrentPage * Model.Filter.PageSize, Model.TotalCount) / @Model.TotalCount <span data-i18n="recordsLabel">条记录</span></span> }
+            </span>
+        </div>
+
+        <div class="table-scroll">
+            @if (!Model.Logs.Any())
+            {
+                <div class="table-empty" data-i18n="emptyRecords">📭 未找到记录</div>
+            }
+            else
+            {
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th data-i18n="tableColTime">时间 (UTC+8)</th>
+                            <th data-i18n="tableColWO">工单</th>
+                            <th data-i18n="tableColSN">序列号</th>
+                            <th data-i18n="tableColColor">颜色</th>
+                            <th data-i18n="tableColStatus">状态</th>
+                            <th data-i18n="tableColNgCode">不良代码</th>
+                            <th data-i18n="tableColReason">NG 原因</th>
+                            <th data-i18n="tableColDesc">描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int rowNum = (Model.CurrentPage - 1) * Model.Filter.PageSize + 1; }
+                        @foreach (var log in Model.Logs)
+                        {
+                            <tr>
+                                <td style="color:var(--text-tertiary);font-size:0.78rem;">@rowNum</td>
+                                <td class="td-time">@log.Timeline.AddHours(1).ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td class="td-mono">@log.WorkOrder</td>
+                                <td class="td-mono">@log.SerialNumber</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(log.Color))
+                                    {
+                                        var hex = colorHexMap.TryGetValue(log.Color, out var h) ? h : "#94a3b8";
+                                        <span class="td-color">
+                                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:@hex;flex-shrink:0"></span>
+                                            @log.Color
+                                        </span>
+                                    }
+                                    else { <span class="td-empty">—</span> }
+                                </td>
+                                <td>
+                                    <span class="pill @(log.Status == "PASS" ? "pill-pass" : "pill-ng")">
+                                        @(log.Status == "PASS" ? "✓ PASS" : "✗ NG")
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(log.NgCode))
+                                    { <span class="ng-code-badge">@log.NgCode</span> }
+                                    else
+                                    { <span class="td-empty">—</span> }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(log.NgReason))
+                                    { <span class="td-reason">@log.NgReason</span> }
+                                    else
+                                    { <span class="td-empty">—</span> }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(log.NgDescription))
+                                    { <span class="td-desc">@log.NgDescription</span> }
+                                    else
+                                    { <span class="td-empty">—</span> }
+                                </td>
+                            </tr>
+                            rowNum++;
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                <a class="page-btn @(Model.CurrentPage <= 1 ? "disabled" : "")"
+                   asp-action="FPYH" asp-controller="FQC"
+                   asp-route-Page="@(Model.CurrentPage - 1)" asp-route-PageSize="@Model.Filter.PageSize"
+                   asp-route-WorkOrder="@Model.Filter.WorkOrder"   asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                   asp-route-Status="@Model.Filter.Status"         asp-route-NgCode="@Model.Filter.NgCode"
+                   asp-route-Color="@Model.Filter.Color"
+                   asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                   asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">←</a>
+
+                @for (int p = Math.Max(1, Model.CurrentPage - 2); p <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); p++)
+                {
+                    <a class="page-btn @(p == Model.CurrentPage ? "active" : "")"
+                       asp-action="FPYH" asp-controller="FQC"
+                       asp-route-Page="@p" asp-route-PageSize="@Model.Filter.PageSize"
+                       asp-route-WorkOrder="@Model.Filter.WorkOrder"   asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                       asp-route-Status="@Model.Filter.Status"         asp-route-NgCode="@Model.Filter.NgCode"
+                       asp-route-Color="@Model.Filter.Color"
+                       asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                       asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">@p</a>
+                }
+
+                <a class="page-btn @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")"
+                   asp-action="FPYH" asp-controller="FQC"
+                   asp-route-Page="@(Model.CurrentPage + 1)" asp-route-PageSize="@Model.Filter.PageSize"
+                   asp-route-WorkOrder="@Model.Filter.WorkOrder"   asp-route-SerialNumber="@Model.Filter.SerialNumber"
+                   asp-route-Status="@Model.Filter.Status"         asp-route-NgCode="@Model.Filter.NgCode"
+                   asp-route-Color="@Model.Filter.Color"
+                   asp-route-DateFrom="@Model.Filter.DateFrom?.ToString("yyyy-MM-dd")"
+                   asp-route-DateTo="@Model.Filter.DateTo?.ToString("yyyy-MM-dd")">→</a>
+            </div>
+        }
+    </div>
+</div>

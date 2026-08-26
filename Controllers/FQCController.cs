@@ -7,6 +7,7 @@ using ScanCheckSakura.Services;
 public class FQCController : Controller
 {
     private readonly IFqcbpService      _fqcbpService;
+    private readonly IFqcfpyService     _fqcfpyService;
     private readonly IFqcOdooService    _fqcOdooService;
     private readonly IDefectSyncService _defectSyncService;
     private readonly ApplicationDbContext _db;
@@ -14,12 +15,14 @@ public class FQCController : Controller
 
     public FQCController(
         IFqcbpService      fqcbpService,
+        IFqcfpyService     fqcfpyService,
         IFqcOdooService    fqcOdooService,
         IDefectSyncService defectSyncService,
         ApplicationDbContext db,
         IHttpClientFactory httpClientFactory)
     {
         _fqcbpService      = fqcbpService;
+        _fqcfpyService     = fqcfpyService;
         _fqcOdooService    = fqcOdooService;
         _defectSyncService = defectSyncService;
         _db                = db;
@@ -33,6 +36,11 @@ public class FQCController : Controller
     // Bắt buộc SN phải đã input tại MiddlePanel + BackPanel trước khi được check ở đây.
     public IActionResult FQC02() => View();
     public IActionResult FQC04() => View();
+
+    // ── Trạm FPY (First Pass Yield) ─────────────────────────
+    // Bảng riêng (SM_FQCFPY / SM_FQCFPY_H) — không dùng chung với FQCBP/FQC02/FQC04.
+    // KHÔNG kiểm tra trùng Serial Number: cho phép quét lại cùng 1 SN nhiều lần.
+    public IActionResult FPY() => View();
 
     [HttpGet]
     public async Task<IActionResult> qty([FromQuery] string workOrder, [FromQuery] string station = "FQCBP")
@@ -140,6 +148,63 @@ public class FQCController : Controller
         catch { }
 
         // Đồng bộ Defect Record khi scan NG
+        if (req.Status == "NG" && !string.IsNullOrWhiteSpace(req.NgCode))
+        {
+            try
+            {
+                await _defectSyncService.UpsertDefectAsync(wo, sn, req.NgCode.Trim());
+            }
+            catch { }
+        }
+
+        return Json(new { qty, passQty, ngQty });
+    }
+
+    // ── GET /FQC/fpyQty ───────────────────────────────────
+    [HttpGet]
+    public async Task<IActionResult> fpyQty([FromQuery] string workOrder)
+    {
+        if (string.IsNullOrWhiteSpace(workOrder))
+            return BadRequest(new { message = "workOrder is required" });
+
+        var (qty, passQty, ngQty) = await _fqcfpyService.GetQtyAsync(workOrder.Trim().ToUpper());
+        return Json(new { qty, passQty, ngQty });
+    }
+
+    // ── POST /FQC/fpyScan ─────────────────────────────────
+    // Không kiểm tra trùng Serial Number — FPY cho phép quét lại cùng 1 SN nhiều lần.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> fpyScan([FromBody] ScanRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.WorkOrder))
+            return BadRequest(new { message = "WorkOrder is required" });
+        if (string.IsNullOrWhiteSpace(req.SerialNumber) || req.SerialNumber.Trim().Length != 15)
+            return BadRequest(new { message = "SerialNumber must be exactly 15 characters" });
+        if (req.Status != "PASS" && req.Status != "NG")
+            return BadRequest(new { message = "Status must be PASS or NG" });
+
+        var wo = req.WorkOrder.Trim().ToUpper();
+        var sn = req.SerialNumber.Trim().ToUpper();
+
+        var color = string.IsNullOrWhiteSpace(req.Color)
+            ? await FetchColorFromOdooAsync(wo)
+            : req.Color.Trim();
+
+        var (qty, passQty, ngQty) = await _fqcfpyService.RecordScanAsync(
+            wo, sn, req.Status,
+            color,
+            req.NgCode?.Trim(),
+            req.NgReason?.Trim(),
+            req.NgDescription?.Trim());
+
+        try
+        {
+            var commentBody = $"@FQC FQC : {req.Status}";
+            await _fqcOdooService.PostCommentBySerialAsync(sn, commentBody);
+        }
+        catch { }
+
         if (req.Status == "NG" && !string.IsNullOrWhiteSpace(req.NgCode))
         {
             try
@@ -277,6 +342,244 @@ public class FQCController : Controller
     [HttpGet]
     public async Task<IActionResult> FQC04HExport(FQCBPLogFilter filter)
         => await ExportHistoryCsvAsync(filter, "FQC04");
+
+    // ── Shared query/view-model builder cho trang History FPY ──
+    private IQueryable<SM_FQCFPY_H> BuildFpyHistoryQuery(FQCFPYLogFilter filter)
+    {
+        var query = _db.SM_FQCFPY_H.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.WorkOrder))
+            query = query.Where(x => x.WorkOrder.Contains(filter.WorkOrder.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.SerialNumber))
+            query = query.Where(x => x.SerialNumber.Contains(filter.SerialNumber.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+            query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.NgCode))
+            query = query.Where(x => x.NgCode != null &&
+                                     x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.Color))
+            query = query.Where(x => x.Color != null &&
+                                     x.Color == filter.Color.Trim());
+        if (filter.DateFrom.HasValue)
+            query = query.Where(x => x.Timeline >= filter.DateFrom.Value.Date);
+        if (filter.DateTo.HasValue)
+            query = query.Where(x => x.Timeline < filter.DateTo.Value.Date.AddDays(1));
+
+        return query;
+    }
+
+    private async Task<FQCFPYLogViewModel> BuildFpyHistoryViewModelAsync(FQCFPYLogFilter filter)
+    {
+        filter.Page     = Math.Max(1, filter.Page);
+        filter.PageSize = filter.PageSize > 0 ? filter.PageSize : 50;
+
+        var query = BuildFpyHistoryQuery(filter);
+
+        var totalCount = await query.CountAsync();
+        var passCount  = await query.CountAsync(x => x.Status == "PASS");
+        var ngCount    = await query.CountAsync(x => x.Status == "NG");
+        var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+        var logs = await query
+            .OrderByDescending(x => x.Timeline)
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToListAsync();
+
+        return new FQCFPYLogViewModel
+        {
+            Logs        = logs,
+            Filter      = filter,
+            TotalCount  = totalCount,
+            PassCount   = passCount,
+            NgCount     = ngCount,
+            CurrentPage = filter.Page,
+            TotalPages  = totalPages
+        };
+    }
+
+    private async Task<IActionResult> ExportFpyHistoryCsvAsync(FQCFPYLogFilter filter)
+    {
+        var query = BuildFpyHistoryQuery(filter);
+        var data  = await query.OrderByDescending(x => x.Timeline).ToListAsync();
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("#,Work Order,Station,Serial Number,Status,Color,NG Code,NG Reason,NG Description,Time (UTC+8)");
+        int i = 1;
+        foreach (var r in data)
+        {
+            var desc   = r.NgDescription?.Replace(",", ";") ?? "";
+            var reason = r.NgReason?.Replace(",", ";") ?? "";
+            sb.AppendLine($"{i++},{r.WorkOrder},{r.Station},{r.SerialNumber},{r.Status},{r.Color ?? ""},{r.NgCode ?? ""},{reason},{desc},{r.Timeline.AddHours(1):dd/MM/yyyy HH:mm:ss}");
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(System.Text.Encoding.UTF8.GetBytes(sb.ToString()))
+            .ToArray();
+
+        return File(bytes, "text/csv", $"FPY_History_{DateTime.Now.AddHours(1):yyyyMMdd_HHmmss}.csv");
+    }
+
+    // ── GET /FQC/FPYH — lịch sử trạm FPY ──────────────────
+    [HttpGet]
+    public async Task<IActionResult> FPYH(FQCFPYLogFilter filter)
+        => View(await BuildFpyHistoryViewModelAsync(filter));
+
+    // ── GET /FQC/FPYExport ─────────────────────────────────
+    [HttpGet]
+    public async Task<IActionResult> FPYExport(FQCFPYLogFilter filter)
+        => await ExportFpyHistoryCsvAsync(filter);
+
+    [HttpGet]
+    public IActionResult FPYR() => View();
+
+    // ── GET /FQC/fpyReportData ─────────────────────────────
+    [HttpGet]
+    public async Task<IActionResult> fpyReportData([FromQuery] FQCFPYReportFilter filter)
+    {
+        var query = _db.SM_FQCFPY_H.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.WorkOrder))
+            query = query.Where(x => x.WorkOrder.Contains(filter.WorkOrder.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.NgCode))
+            query = query.Where(x => x.NgCode != null &&
+                                     x.NgCode.Contains(filter.NgCode.Trim().ToUpper()));
+        if (!string.IsNullOrWhiteSpace(filter.Color))
+            query = query.Where(x => x.Color != null &&
+                                     x.Color == filter.Color.Trim());
+        if (filter.DateFrom.HasValue)
+            query = query.Where(x => x.Timeline >= filter.DateFrom.Value.Date);
+        if (filter.DateTo.HasValue)
+            query = query.Where(x => x.Timeline < filter.DateTo.Value.Date.AddDays(1));
+
+        var allRows = await query
+            .OrderBy(x => x.Timeline)
+            .Select(x => new
+            {
+                x.WorkOrder,
+                x.SerialNumber,
+                x.Status,
+                x.Color,
+                x.NgCode,
+                x.NgReason,
+                x.NgDescription,
+                x.Timeline
+            })
+            .ToListAsync();
+
+        // First Pass Yield: mỗi Serial Number chỉ tính 1 lần duy nhất — lấy kết quả
+        // của LƯỢT QUÉT ĐẦU TIÊN (Timeline sớm nhất). Các lượt quét lại cùng SN (rework)
+        // vẫn nằm đầy đủ trong SM_FQCFPY_H / trang History, chỉ không tính vào KPI/biểu đồ report này.
+        var rows = allRows
+            .GroupBy(x => x.SerialNumber)
+            .Select(g => g.First())
+            .OrderByDescending(x => x.Timeline)
+            .ToList();
+
+        int totalPass = rows.Count(x => x.Status == "PASS");
+        int totalNg   = rows.Count(x => x.Status == "NG");
+
+        var dailyTrend = rows
+            .GroupBy(x => x.Timeline.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new
+            {
+                date = g.Key.ToString("yyyy-MM-dd"),
+                pass = g.Count(x => x.Status == "PASS"),
+                ng   = g.Count(x => x.Status == "NG")
+            })
+            .ToList();
+
+        var ngPerWo = rows
+            .GroupBy(x => x.WorkOrder)
+            .Select(g => new
+            {
+                workOrder = g.Key,
+                ng    = g.Count(x => x.Status == "NG"),
+                pass  = g.Count(x => x.Status == "PASS"),
+                total = g.Count()
+            })
+            .OrderByDescending(x => x.ng)
+            .Take(20)
+            .ToList();
+
+        var ngPerCode = rows
+            .Where(x => x.Status == "NG")
+            .GroupBy(x => new { Code = x.NgCode ?? "", Reason = x.NgReason ?? "" })
+            .Select(g => new { code = g.Key.Code, reason = g.Key.Reason, count = g.Count() })
+            .OrderByDescending(x => x.count)
+            .ToList();
+
+        var top5Wos = ngPerWo.Take(5).Select(x => x.workOrder).ToHashSet();
+        var ngTrendPerWo = rows
+            .Where(x => x.Status == "NG" && top5Wos.Contains(x.WorkOrder))
+            .GroupBy(x => x.WorkOrder)
+            .ToDictionary(
+                g => g.Key,
+                g => g.GroupBy(x => x.Timeline.Date)
+                       .OrderBy(d => d.Key)
+                       .Select(d => new { date = d.Key.ToString("yyyy-MM-dd"), ng = d.Count() })
+                       .ToList<object>());
+
+        var top8Wos = ngPerWo.Take(8).Select(x => x.workOrder).ToHashSet();
+        var ngCodePerWo = rows
+            .Where(x => x.Status == "NG" && top8Wos.Contains(x.WorkOrder))
+            .GroupBy(x => x.WorkOrder)
+            .ToDictionary(
+                g => g.Key,
+                g => g.GroupBy(x => x.NgCode ?? "Unknown")
+                       .ToDictionary(cg => cg.Key, cg => cg.Count()));
+
+        var heatmap = new Dictionary<int, Dictionary<int, int>>();
+        foreach (var r in rows.Where(x => x.Status == "NG"))
+        {
+            int hour = r.Timeline.Hour;
+            int dow  = ((int)r.Timeline.DayOfWeek + 6) % 7;
+            if (!heatmap.ContainsKey(hour)) heatmap[hour] = new();
+            heatmap[hour].TryGetValue(dow, out int cur);
+            heatmap[hour][dow] = cur + 1;
+        }
+
+        var ngDetailRows = rows
+            .Where(x => x.Status == "NG")
+            .Take(2000)
+            .Select(x => new
+            {
+                workOrder     = x.WorkOrder,
+                serialNumber  = x.SerialNumber,
+                status        = x.Status,
+                color         = x.Color,
+                ngCode        = x.NgCode,
+                ngReason      = x.NgReason,
+                ngDescription = x.NgDescription,
+                timeline      = x.Timeline
+            })
+            .ToList();
+
+        var availableColors = rows
+            .Where(x => !string.IsNullOrWhiteSpace(x.Color))
+            .Select(x => x.Color!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+
+        return Json(new
+        {
+            totalScanned = rows.Count,
+            totalPass,
+            totalNg,
+            uniqueWo     = rows.Select(x => x.WorkOrder).Distinct().Count(),
+            uniqueNgCode = ngPerCode.Count,
+            dailyTrend,
+            ngPerWo,
+            ngPerCode,
+            ngTrendPerWo,
+            ngCodePerWo,
+            heatmap,
+            ngDetailRows,
+            availableColors
+        });
+    }
 
     [HttpGet]
     public IActionResult FQCBPR() => View();
@@ -533,6 +836,15 @@ public class FQCReportFilter
     public string?   Station   { get; set; }
     public string?   NgCode    { get; set; }
     public string?   Color     { get; set; }   // ← NEW
+    public DateTime? DateFrom  { get; set; }
+    public DateTime? DateTo    { get; set; }
+}
+
+public class FQCFPYReportFilter
+{
+    public string?   WorkOrder { get; set; }
+    public string?   NgCode    { get; set; }
+    public string?   Color     { get; set; }
     public DateTime? DateFrom  { get; set; }
     public DateTime? DateTo    { get; set; }
 }

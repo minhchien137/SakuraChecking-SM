@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Final Yield Report";
+    ViewData["Title"] = "First Pass Yield Report";
 }
 
 <style>
@@ -89,7 +89,7 @@
     /* ── Filter Panel ── */
     .filter-panel { background: var(--white); border: 1px solid rgba(200,16,46,0.07); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
     .filter-panel h3 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 0.85rem; }
-    .filter-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr auto; gap: 0.65rem 0.9rem; align-items: end; }
+    .filter-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 0.65rem 0.9rem; align-items: end; }
     @@media (max-width: 1100px) { .filter-grid { grid-template-columns: 1fr 1fr 1fr; } }
 
     /* Color dot inside select option */
@@ -276,16 +276,16 @@
     <!-- ══════════════ HEADER ══════════════ -->
     <div class="rpt-header">
         <div class="rpt-header__left">
-            <h1 data-i18n="rptTitle">📊 最终良率报告</h1>
-            <p data-i18n="rptSub">FQC 质量报告（最终质量控制）</p>
+            <h1 data-i18n="rptTitleFpy">📊 一次合格率报告</h1>
+            <p data-i18n="rptSubFpy">一次合格率质量报告</p>
         </div>
         <div class="rpt-header__right">
             <button class="btn-export" id="btnExport" onclick="exportToExcel()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span data-i18n="rptExport">导出 Excel</span>
             </button>
-            <a href="/FQC/FQCBP" class="btn-back" data-i18n="backToScan">← 扫描</a>
-            <a href="/FQC/FQCBPH" class="btn-back" data-i18n="rptHistory">📋 历史记录</a>
+            <a href="/FQC/FPY" class="btn-back" data-i18n="backToScan">← 扫描</a>
+            <a href="/FQC/FPYH" class="btn-back" data-i18n="rptHistory">📋 历史记录</a>
         </div>
     </div>
 
@@ -308,15 +308,6 @@
             <div class="filter-group">
                 <label data-i18n="rptFilterNgCode">不良代码</label>
                 <input type="text" id="f_ngcode" placeholder="Filter by NG code" />
-            </div>
-            <div class="filter-group">
-                <label data-i18n="rptFilterStation">工位</label>
-                <select id="f_station">
-                    <option value="" data-i18n="rptAllStations">全部工位</option>
-                    <option value="FQCBP" data-i18n="rptStationFqcbp">最终良率</option>
-                    <option value="FQC02">FQC02</option>
-                    <option value="FQC04">FQC04</option>
-                </select>
             </div>
             <div class="filter-group">
                 <label data-i18n="rptFilterColor">颜色</label>
@@ -573,7 +564,6 @@
             from:    document.getElementById('f_from').value,
             to:      document.getElementById('f_to').value,
             ngcode:  document.getElementById('f_ngcode').value.trim().toUpperCase(),
-            station: document.getElementById('f_station').value.trim(),
             color:   document.getElementById('f_color').value.trim(),
         };
     }
@@ -583,14 +573,12 @@
         if (f.from)    p.set('dateFrom',  f.from);
         if (f.to)      p.set('dateTo',    f.to);
         if (f.ngcode)  p.set('ngCode',    f.ngcode);
-        if (f.station) p.set('station',   f.station);
         if (f.color)   p.set('color',     f.color);
         return p.toString();
     }
     function resetFilter() {
         ['f_wo','f_from','f_to','f_ngcode'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('f_color').value = '';
-        document.getElementById('f_station').value = '';
         setDefaultDates();
         loadAll();
     }
@@ -600,7 +588,7 @@
     // ═══════════════════════════════════════════════
     async function fetchReportData(f) {
         const qs  = buildQuery(f);
-        const res = await fetch(`${pathBase}/FQC/reportData${qs ? '?' + qs : ''}`);
+        const res = await fetch(`${pathBase}/FQC/fpyReportData${qs ? '?' + qs : ''}`);
         if (!res.ok) throw new Error('API error ' + res.status);
         return res.json();
     }
@@ -1357,7 +1345,7 @@
             // Save
             const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
             const woLabel = f.wo ? `_${f.wo.replace(/\//g,'-')}` : '';
-            XLSX.writeFile(wb, `FQC_Report_${dateStr}${woLabel}.xlsx`);
+            XLSX.writeFile(wb, `FPY_Report_${dateStr}${woLabel}.xlsx`);
 
         } catch(err) {
             console.error('Export error:', err);
@@ -1379,12 +1367,6 @@
         renderStacked(rawData); renderNgTable(rawData); renderHeatmap(rawData);
         renderDetailPage();
     });
-
-    // Nếu vào trang qua ?Station=FQC02 (từ navbar khi đang ở trạm FQC02/FQC04) → khoá sẵn filter Station
-    (function initStationFromQuery() {
-        const qsStation = new URLSearchParams(window.location.search).get('Station');
-        if (qsStation) document.getElementById('f_station').value = qsStation.toUpperCase();
-    })();
 
     setDefaultDates();
     loadAll();

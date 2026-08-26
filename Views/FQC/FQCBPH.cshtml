@@ -1,6 +1,6 @@
 @model ScanCheckSakura.Models.FQCBPLogViewModel
 @{
-    ViewData["Title"] = "FQC 检查历史 Inspection History";
+    ViewData["Title"] = "Final Yield History";
 
     var colorHexMap = new Dictionary<string, string> {
         {"Blue","#3b82f6"},{"Green","#22c55e"},{"Pink","#ec4899"},
@@ -141,7 +141,7 @@
 
     <div class="log-header">
         <div class="log-header__left">
-            <h1 data-i18n="historyTitleGeneral">FQC 检查历史</h1>
+            <h1 data-i18n="historyTitleGeneral">最终良率检验历史</h1>
             <p data-i18n="historySubGeneral">所有FQC序列号检查结果</p>
         </div>
         <a asp-action="FQCBP" asp-controller="FQC" class="btn-back" data-i18n="backToCheck">← 返回检查</a>

@@ -77,6 +77,7 @@
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
         var currentStation = (currentAction == "FQC02" || currentAction == "FQC02H") ? "FQC02"
                             : (currentAction == "FQC04" || currentAction == "FQC04H") ? "FQC04"
+                            : (currentAction == "FPY"   || currentAction == "FPYH" || currentAction == "FPYR") ? "FPY"
                             : "FQCBP";
 
         var pb = Context.Request.PathBase.Value?.TrimEnd('/') ?? "";
@@ -84,11 +85,15 @@
         {
             "FQC02" => $"{pb}/FQC/FQC02H",
             "FQC04" => $"{pb}/FQC/FQC04H",
+            "FPY"   => $"{pb}/FQC/FPYH",
             _        => $"{pb}/FQC/FQCBPH"
         };
-        var reportUrl = currentStation == "FQCBP"
-            ? $"{pb}/FQC/FQCBPR"
-            : $"{pb}/FQC/FQCBPR?Station={currentStation}";
+        var reportUrl = currentStation switch
+        {
+            "FQCBP" => $"{pb}/FQC/FQCBPR",
+            "FPY"   => $"{pb}/FQC/FPYR",
+            _        => $"{pb}/FQC/FQCBPR?Station={currentStation}"
+        };
 
         var isFqcPage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "FQC", StringComparison.OrdinalIgnoreCase);
 
@@ -96,13 +101,29 @@
         {
             "FQC02" => "FQC02",
             "FQC04" => "FQC04",
-            _        => "FQC F/G"
+            "FPY"   => "First Pass Yield",
+            _        => "Final Yield"
         };
         var stationAction = currentStation switch
         {
             "FQC02" => "FQC02",
             "FQC04" => "FQC04",
+            "FPY"   => "FPY",
             _        => "FQCBP"
+        };
+        var historyLabel = currentStation switch
+        {
+            "FQC02" => "FQC02 History",
+            "FQC04" => "FQC04 History",
+            "FPY"   => "First Pass Yield History",
+            _        => "Final Yield History"
+        };
+        var reportLabel = currentStation switch
+        {
+            "FQC02" => "FQC02 Report",
+            "FQC04" => "FQC04 Report",
+            "FPY"   => "First Pass Yield Report",
+            _        => "Final Yield Report"
         };
     }
     <header>
@@ -119,11 +140,11 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="@historyUrl">FQC History</a>
+                            <a class="nav-link" href="@historyUrl">@historyLabel</a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="@reportUrl">FQC Report</a>
+                            <a class="nav-link" href="@reportUrl">@reportLabel</a>
                         </li>
                     </ul>
 

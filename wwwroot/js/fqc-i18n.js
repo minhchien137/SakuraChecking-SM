@@ -56,13 +56,18 @@
         toastStationBlockedTitle: { zh: '工位管控',                     en: 'Station Control' },
         toastStationBlockedMsg:   { zh: '未在以下工位输入：',             en: 'Not yet input at:' },
 
-        // ── History pages (FQCBPH / FQC02H / FQC04H) ─────────
-        historyTitleGeneral:  { zh: 'FQC 检查历史',                     en: 'FQC Inspection History' },
+        scanTitleFqcbp:       { zh: '最终良率',                         en: 'Final Yield' },
+        scanTitleFpy:         { zh: '一次合格率',                        en: 'First Pass Yield' },
+
+        // ── History pages (FQCBPH / FQC02H / FQC04H / FPYH) ──
+        historyTitleGeneral:  { zh: '最终良率检验历史',                   en: 'Final Yield History' },
         historySubGeneral:    { zh: '所有FQC序列号检查结果',              en: 'All FQC Serial Number Check Results' },
         historyTitle02:       { zh: 'FQC02 检查历史',                    en: 'FQC02 Inspection History' },
         historySub02:         { zh: '半成品 FQC02 工位序列号检查结果',     en: 'Semi-finished FQC02 Station Serial Number Check Results' },
         historyTitle04:       { zh: 'FQC04 检查历史',                    en: 'FQC04 Inspection History' },
         historySub04:         { zh: '半成品 FQC04 工位序列号检查结果',     en: 'Semi-finished FQC04 Station Serial Number Check Results' },
+        historyTitleFpy:      { zh: '一次合格率检验历史',                 en: 'First Pass Yield History' },
+        historySubFpy:        { zh: '首件检验(FPY)工位序列号检查结果',     en: 'First Pass Yield (FPY) Station Serial Number Check Results' },
         statTotal:            { zh: '总数',                             en: 'TOTAL' },
         statPass:             { zh: '通过',                             en: 'PASS' },
         statNg:               { zh: '不良',                             en: 'NG' },
@@ -91,7 +96,10 @@
         recordsLabel:         { zh: '条记录',                           en: 'records' },
 
         // ── Dashboard (FQCBPR) ────────────────────────────────
-        rptTitle:             { zh: '📊 FQC 报告',                       en: '📊 FQC Report' },
+        rptTitle:             { zh: '📊 最终良率报告',                    en: '📊 Final Yield Report' },
+        rptStationFqcbp:      { zh: '最终良率',                          en: 'Final Yield' },
+        rptTitleFpy:          { zh: '📊 一次合格率报告',                  en: '📊 First Pass Yield Report' },
+        rptSubFpy:            { zh: '一次合格率质量报告',                  en: 'First Pass Yield Quality Report' },
         rptSub:               { zh: 'FQC 质量报告（最终质量控制）',        en: 'FQC Quality Report' },
         rptExport:            { zh: '导出 Excel',                        en: 'Export Excel' },
         rptHistory:           { zh: '📋 历史记录',                       en: '📋 History' },
